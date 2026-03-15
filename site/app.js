@@ -93,16 +93,18 @@ function loadChart() {
     return;
   }
 
-  // Show loading
+  const hasExistingChart = !chartImg.classList.contains("hidden");
+
+  // If no chart yet, show loading. Otherwise keep existing chart visible.
   chartPlaceholder.classList.add("hidden");
-  chartImg.classList.add("hidden");
-  chartLoading.classList.remove("hidden");
-  embedSection.classList.add("hidden");
+  if (!hasExistingChart) {
+    chartLoading.classList.remove("hidden");
+  }
 
   const svgUrl = `${BASE_URL}/api/svg?users=${users.join(",")}&range=${range}`;
   const siteUrl = `${BASE_URL}/?users=${users.join(",")}&range=${range}`;
 
-  // Load the SVG as an image
+  // Preload new SVG in background, swap when ready
   const img = new Image();
   img.onload = () => {
     chartImg.src = svgUrl;
@@ -116,8 +118,10 @@ function loadChart() {
   };
   img.onerror = () => {
     chartLoading.classList.add("hidden");
-    chartPlaceholder.classList.remove("hidden");
-    chartPlaceholder.querySelector("p").textContent = "Failed to load chart. Please try again.";
+    if (!hasExistingChart) {
+      chartPlaceholder.classList.remove("hidden");
+      chartPlaceholder.querySelector("p").textContent = "Failed to load chart. Please try again.";
+    }
   };
   img.src = svgUrl;
 }

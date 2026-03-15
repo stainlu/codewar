@@ -270,7 +270,7 @@ export function renderChart(datasets: ChartData[]): string {
 
     const pathD = buildSmoothPath(xs, ys);
     paths.push(
-      `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />`
+      `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="data-line" style="animation-delay: ${di * 0.15}s" />`
     );
   }
 
@@ -302,6 +302,15 @@ export function renderChart(datasets: ChartData[]): string {
     .chart-title { font-family: 'Virgil', 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive; font-size: 20px; font-weight: normal; fill: #333; }
     .legend-label { font-family: 'Virgil', 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive; font-size: 14px; fill: #444; }
     .watermark { font-family: 'Virgil', 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive; font-size: 11px; fill: #bbb; }
+    @keyframes draw {
+      from { stroke-dashoffset: 10000; }
+      to { stroke-dashoffset: 0; }
+    }
+    .data-line {
+      stroke-dasharray: 10000;
+      stroke-dashoffset: 10000;
+      animation: draw 1s ease-out forwards;
+    }
     @media (prefers-color-scheme: dark) {
       .chart-bg { fill: #0d1117; }
       .grid-line { stroke: #30363d; }
