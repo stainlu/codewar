@@ -65,9 +65,16 @@ async function handleSvg(
 
   const range = rangeParam as TimeRange;
 
+  // Check SVG cache first (keyed by sorted users + range)
+  const svgCacheKey = `svg:${[...usernames].sort().join(",")}:${range}`;
+  const cachedSvg = await env.CACHE.get(svgCacheKey);
+  if (cachedSvg) {
+    return svgResponse(cachedSvg);
+  }
+
   // Fetch all users in parallel
   const results = await Promise.allSettled(
-    usernames.map((username) => fetchUserContributions(env, username))
+    usernames.map((username) => fetchUserContributions(env, username, range))
   );
 
   const datasets: ChartData[] = [];
@@ -77,7 +84,7 @@ async function handleSvg(
     const result = results[i];
     if (result.status === "fulfilled") {
       const filtered = filterByRange(result.value.daily, range);
-            const smoothed = applyMovingAverage(filtered, 3);
+      const smoothed = applyMovingAverage(filtered, 3);
       datasets.push({
         username: result.value.username,
         points: smoothed,
@@ -91,7 +98,12 @@ async function handleSvg(
     return svgResponse(renderErrorSvg(errors.join("; ")));
   }
 
-  return svgResponse(renderChart(datasets));
+  const svg = renderChart(datasets);
+
+  // Cache the rendered SVG for 24 hours
+  await env.CACHE.put(svgCacheKey, svg, { expirationTtl: 86400 });
+
+  return svgResponse(svg);
 }
 
 async function handleApi(
@@ -119,7 +131,7 @@ async function handleApi(
   const range = rangeParam as TimeRange;
 
   const results = await Promise.allSettled(
-    usernames.map((username) => fetchUserContributions(env, username))
+    usernames.map((username) => fetchUserContributions(env, username, range))
   );
 
   const datasets: ChartData[] = [];

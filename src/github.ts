@@ -109,9 +109,37 @@ async function fetchYearContributions(
   return days;
 }
 
+/**
+ * Determine which years we need to fetch based on the requested range.
+ * For "3m" we only need the current year + possibly the previous year.
+ */
+function getNeededYears(allYears: number[], range: string): number[] {
+  if (range === "all") return allYears;
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  let cutoffYear: number;
+
+  switch (range) {
+    case "3m":
+    case "6m":
+      // Need current year + previous year (range might cross Jan 1)
+      cutoffYear = currentYear - 1;
+      break;
+    case "1y":
+      cutoffYear = currentYear - 1;
+      break;
+    default:
+      return allYears;
+  }
+
+  return allYears.filter((y) => y >= cutoffYear);
+}
+
 export async function fetchUserContributions(
   env: Env,
-  username: string
+  username: string,
+  range = "all"
 ): Promise<UserContributions> {
   // Check cache first
   const cacheKey = `contributions:${username.toLowerCase()}`;
@@ -120,12 +148,13 @@ export async function fetchUserContributions(
     return cached as UserContributions;
   }
 
-  // Fetch from GitHub
-  const years = await fetchContributionYears(env.GITHUB_TOKEN, username);
+  // Fetch from GitHub — only the years we need
+  const allYears = await fetchContributionYears(env.GITHUB_TOKEN, username);
+  const neededYears = getNeededYears(allYears, range);
 
-  // Fetch all years in parallel
+  // Fetch needed years in parallel
   const yearResults = await Promise.all(
-    years.map((year) => fetchYearContributions(env.GITHUB_TOKEN, username, year))
+    neededYears.map((year) => fetchYearContributions(env.GITHUB_TOKEN, username, year))
   );
 
   // Merge and sort by date
