@@ -320,7 +320,7 @@ export function renderChart(datasets: ChartData[]): string {
   ${paths.join("\n  ")}
   ${legendItems.join("\n  ")}
   ${title}
-  <text x="${CHART_WIDTH - 12}" y="${CHART_HEIGHT - 8}" class="watermark" text-anchor="end">contribtrends.dev</text>
+  <text x="${CHART_WIDTH - 12}" y="${CHART_HEIGHT - 8}" class="watermark" text-anchor="end">codewar.dev</text>
 </svg>`;
 }
 
