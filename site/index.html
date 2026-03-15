@@ -43,8 +43,8 @@
 
       <div class="range-selector">
         <span class="range-label">Time range:</span>
+        <button class="btn btn-range" data-range="1m">1 month</button>
         <button class="btn btn-range active" data-range="3m">3 months</button>
-        <button class="btn btn-range" data-range="6m">6 months</button>
         <button class="btn btn-range" data-range="1y">1 year</button>
         <button class="btn btn-range" data-range="all">All time</button>
       </div>
@@ -54,6 +54,7 @@
       <div class="chart-placeholder" id="chart-placeholder">
         <p>Add GitHub usernames above to generate a chart</p>
       </div>
+      <div id="chart-spinner" class="chart-spinner hidden"><div class="spinner"></div></div>
       <img id="chart-img" class="chart-img hidden" alt="Code War Chart">
       <div id="chart-loading" class="chart-loading hidden">
         <p>Loading contributions...</p>

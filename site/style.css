@@ -182,6 +182,7 @@ header {
 
 /* Chart */
 .chart-container {
+  position: relative;
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 12px;
@@ -210,6 +211,27 @@ header {
   text-align: center;
   color: #888;
   padding: 60px 0;
+}
+
+/* Spinner overlay — shown top-right of chart container while loading */
+.chart-spinner {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #4285F4;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .hidden {

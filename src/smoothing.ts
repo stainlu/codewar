@@ -13,11 +13,11 @@ export function filterByRange(
   let cutoff: Date;
 
   switch (range) {
+    case "1m":
+      cutoff = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      break;
     case "3m":
       cutoff = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-      break;
-    case "6m":
-      cutoff = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
       break;
     case "1y":
       cutoff = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());

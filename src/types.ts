@@ -26,4 +26,4 @@ export interface ChartData {
   avatarBase64?: string;
 }
 
-export type TimeRange = "3m" | "6m" | "1y" | "all";
+export type TimeRange = "1m" | "3m" | "1y" | "all";

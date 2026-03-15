@@ -3,7 +3,7 @@ import { fetchUserContributions, fetchAvatar } from "./github";
 import { filterByRange, applyMovingAverage } from "./smoothing";
 import { renderChart, renderErrorSvg } from "./chart";
 
-const VALID_RANGES = new Set(["3m", "6m", "1y", "all"]);
+const VALID_RANGES = new Set(["1m", "3m", "1y", "all"]);
 const MAX_USERS = 5;
 
 function corsHeaders(): HeadersInit {

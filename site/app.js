@@ -14,6 +14,7 @@ const chartLoading = document.getElementById("chart-loading");
 const embedSection = document.getElementById("embed-section");
 const embedCode = document.getElementById("embed-code");
 const copyBtn = document.getElementById("copy-btn");
+const chartSpinner = document.getElementById("chart-spinner");
 const guideSection = document.getElementById("guide");
 const guideLink = document.getElementById("guide-link");
 
@@ -26,7 +27,7 @@ function initFromUrl() {
   if (usersParam) {
     users = usersParam.split(",").map(u => u.trim()).filter(Boolean);
   }
-  if (rangeParam && ["3m", "6m", "1y", "all"].includes(rangeParam)) {
+  if (rangeParam && ["1m", "3m", "1y", "all"].includes(rangeParam)) {
     range = rangeParam;
     document.querySelectorAll(".btn-range").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.range === range);
@@ -95,11 +96,12 @@ function loadChart() {
 
   const hasExistingChart = !chartImg.classList.contains("hidden");
 
-  // If no chart yet, show loading. Otherwise keep existing chart visible.
+  // If no chart yet, show loading text. Otherwise keep existing chart + show spinner.
   chartPlaceholder.classList.add("hidden");
   if (!hasExistingChart) {
     chartLoading.classList.remove("hidden");
   }
+  chartSpinner.classList.remove("hidden");
 
   const svgUrl = `${BASE_URL}/api/svg?users=${users.join(",")}&range=${range}`;
   const siteUrl = `${BASE_URL}/?users=${users.join(",")}&range=${range}`;
@@ -110,6 +112,7 @@ function loadChart() {
     chartImg.src = svgUrl;
     chartImg.classList.remove("hidden");
     chartLoading.classList.add("hidden");
+    chartSpinner.classList.add("hidden");
 
     // Show embed code
     const markdown = `[![Code War](${svgUrl})](${siteUrl})`;
@@ -118,6 +121,7 @@ function loadChart() {
   };
   img.onerror = () => {
     chartLoading.classList.add("hidden");
+    chartSpinner.classList.add("hidden");
     if (!hasExistingChart) {
       chartPlaceholder.classList.remove("hidden");
       chartPlaceholder.querySelector("p").textContent = "Failed to load chart. Please try again.";

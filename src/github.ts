@@ -145,8 +145,8 @@ function getNeededYears(allYears: number[], range: string): number[] {
   let cutoffYear: number;
 
   switch (range) {
+    case "1m":
     case "3m":
-    case "6m":
       // Need current year + previous year (range might cross Jan 1)
       cutoffYear = currentYear - 1;
       break;
