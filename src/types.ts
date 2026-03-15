@@ -23,6 +23,7 @@ export interface SmoothedPoint {
 export interface ChartData {
   username: string;
   points: SmoothedPoint[];
+  avatarBase64?: string;
 }
 
 export type TimeRange = "3m" | "6m" | "1y" | "all";

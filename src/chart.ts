@@ -1,7 +1,6 @@
 import type { ChartData } from "./types";
 import { VIRGIL_WOFF2_BASE64 } from "./font";
 
-// Color palette — warm, slightly muted for hand-drawn feel
 const COLORS = [
   "#4285F4", // blue
   "#E34234", // red
@@ -13,15 +12,24 @@ const COLORS = [
   "#C2185B", // pink
 ];
 
-const CHART_WIDTH = 800;
-const CHART_HEIGHT = 420;
-const PADDING = { top: 55, right: 30, bottom: 65, left: 55 };
+const FONT_STACK = "'Virgil', 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive";
 
-const PLOT_WIDTH = CHART_WIDTH - PADDING.left - PADDING.right;
-const PLOT_HEIGHT = CHART_HEIGHT - PADDING.top - PADDING.bottom;
+// Layout — chart area + right legend panel
+const LEGEND_WIDTH = 180;
+const CHART_AREA_WIDTH = 800;
+const TOTAL_WIDTH = CHART_AREA_WIDTH + LEGEND_WIDTH;
+const TOTAL_HEIGHT = 400;
+const PADDING = { top: 50, right: 20, bottom: 50, left: 55 };
 
-// Minimum pixel distance between x-axis tick labels
+const PLOT_WIDTH = CHART_AREA_WIDTH - PADDING.left - PADDING.right;
+const PLOT_HEIGHT = TOTAL_HEIGHT - PADDING.top - PADDING.bottom;
+
 const MIN_TICK_DISTANCE = 70;
+
+// Avatar dimensions
+const AVATAR_SIZE = 36;
+const AVATAR_RADIUS = AVATAR_SIZE / 2;
+const LEGEND_ITEM_HEIGHT = 55;
 
 function escapeXml(str: string): string {
   return str
@@ -31,99 +39,66 @@ function escapeXml(str: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/**
- * Seeded pseudo-random number generator (deterministic).
- * Same inputs always produce same "random" output → SVG is cacheable.
- */
 function seededRandom(seed: number): number {
   const x = Math.sin(seed * 9301 + 49297) * 233280;
   return x - Math.floor(x);
 }
 
-/**
- * Generate a hand-drawn/wobbly line path between two points.
- * Adds small perpendicular jitter at several intermediate points.
- */
 function wobbleLine(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  seed: number,
-  amplitude = 1.5
+  x1: number, y1: number, x2: number, y2: number,
+  seed: number, amplitude = 1.5
 ): string {
   const segments = 8;
   const dx = x2 - x1;
   const dy = y2 - y1;
   const len = Math.sqrt(dx * dx + dy * dy);
-
-  // Perpendicular direction
   const nx = -dy / (len || 1);
   const ny = dx / (len || 1);
 
   let path = `M ${x1.toFixed(1)},${y1.toFixed(1)}`;
-
   for (let i = 1; i <= segments; i++) {
     const t = i / segments;
-    const jitter =
-      i < segments ? (seededRandom(seed + i) - 0.5) * 2 * amplitude : 0;
+    const jitter = i < segments ? (seededRandom(seed + i) - 0.5) * 2 * amplitude : 0;
     const px = x1 + dx * t + nx * jitter;
     const py = y1 + dy * t + ny * jitter;
     path += ` L ${px.toFixed(1)},${py.toFixed(1)}`;
   }
-
   return path;
 }
 
 function formatDateLabel(dateStr: string): string {
-  const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-  ];
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const [, m, d] = dateStr.split("-").map(Number);
   if (d === 1) return months[m - 1];
   return `${months[m - 1]} ${d}`;
 }
 
-/**
- * Generate tick positions for the X axis.
- * Ensures minimum pixel distance between ticks to prevent overlap.
- */
 function generateXTicks(dates: string[], totalWidth: number, targetCount = 7): number[] {
-  if (dates.length <= 2) {
-    return dates.map((_, i) => i);
-  }
+  if (dates.length <= 2) return dates.map((_, i) => i);
 
   const step = Math.floor(dates.length / (targetCount - 1));
   const ticks: number[] = [];
-  for (let i = 0; i < dates.length; i += step) {
-    ticks.push(i);
-  }
+  for (let i = 0; i < dates.length; i += step) ticks.push(i);
 
-  // Only append the last date if it's far enough from the previous tick
   const lastIdx = dates.length - 1;
   if (ticks[ticks.length - 1] !== lastIdx) {
     const prevIdx = ticks[ticks.length - 1];
     const prevX = (prevIdx / (dates.length - 1)) * totalWidth;
-    const lastX = totalWidth; // last date maps to full width
+    const lastX = totalWidth;
     if (lastX - prevX >= MIN_TICK_DISTANCE) {
       ticks.push(lastIdx);
     } else {
-      // Replace the last tick with the final date
       ticks[ticks.length - 1] = lastIdx;
     }
   }
-
   return ticks;
 }
 
 function generateYTicks(maxValue: number): number[] {
   if (maxValue <= 0) return [0];
-
   const rawStep = maxValue / 5;
   const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
   const normalized = rawStep / magnitude;
-
   let niceStep: number;
   if (normalized <= 1.5) niceStep = 1 * magnitude;
   else if (normalized <= 3.5) niceStep = 2 * magnitude;
@@ -137,41 +112,24 @@ function generateYTicks(maxValue: number): number[] {
   return ticks;
 }
 
-/**
- * Build an SVG path string from data points using Catmull-Rom spline.
- */
-function buildSmoothPath(
-  xs: number[],
-  ys: number[],
-  tension = 0.3
-): string {
+function buildSmoothPath(xs: number[], ys: number[], tension = 0.3): string {
   if (xs.length < 2) return "";
-
   let path = `M ${xs[0].toFixed(1)},${ys[0].toFixed(1)}`;
-
   if (xs.length === 2) {
     path += ` L ${xs[1].toFixed(1)},${ys[1].toFixed(1)}`;
     return path;
   }
-
   for (let i = 0; i < xs.length - 1; i++) {
-    const p0x = xs[Math.max(0, i - 1)];
-    const p0y = ys[Math.max(0, i - 1)];
-    const p1x = xs[i];
-    const p1y = ys[i];
-    const p2x = xs[i + 1];
-    const p2y = ys[i + 1];
-    const p3x = xs[Math.min(xs.length - 1, i + 2)];
-    const p3y = ys[Math.min(xs.length - 1, i + 2)];
-
+    const p0x = xs[Math.max(0, i - 1)], p0y = ys[Math.max(0, i - 1)];
+    const p1x = xs[i], p1y = ys[i];
+    const p2x = xs[i + 1], p2y = ys[i + 1];
+    const p3x = xs[Math.min(xs.length - 1, i + 2)], p3y = ys[Math.min(xs.length - 1, i + 2)];
     const cp1x = p1x + (p2x - p0x) * tension / 3;
     const cp1y = p1y + (p2y - p0y) * tension / 3;
     const cp2x = p2x - (p3x - p1x) * tension / 3;
     const cp2y = p2y - (p3y - p1y) * tension / 3;
-
     path += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2x.toFixed(1)},${p2y.toFixed(1)}`;
   }
-
   return path;
 }
 
@@ -184,21 +142,27 @@ function fontFaceRule(): string {
     }`;
 }
 
+/**
+ * Get the last point's value for a dataset (used for legend ordering).
+ */
+function getLastValue(ds: ChartData): number {
+  if (ds.points.length === 0) return 0;
+  return ds.points[ds.points.length - 1].value;
+}
+
 export function renderChart(datasets: ChartData[]): string {
   if (datasets.length === 0 || datasets.every((d) => d.points.length === 0)) {
     return renderErrorSvg("No contribution data found");
   }
 
-  // Build a union of all dates across datasets
+  // Build a union of all dates
   const allDatesSet = new Set<string>();
   for (const ds of datasets) {
-    for (const p of ds.points) {
-      allDatesSet.add(p.date);
-    }
+    for (const p of ds.points) allDatesSet.add(p.date);
   }
   const allDates = [...allDatesSet].sort();
 
-  // Find max value across all datasets
+  // Find max value
   let maxValue = 0;
   for (const ds of datasets) {
     for (const p of ds.points) {
@@ -211,13 +175,12 @@ export function renderChart(datasets: ChartData[]): string {
   const yMax = yTicks[yTicks.length - 1];
   const xTicks = generateXTicks(allDates, PLOT_WIDTH);
 
-  // --- Wobbly grid lines ---
+  // --- Grid lines ---
   const gridLines: string[] = [];
   let seedCounter = 1;
 
   for (const tick of yTicks) {
     const y = PADDING.top + PLOT_HEIGHT - (tick / yMax) * PLOT_HEIGHT;
-    // Hand-drawn horizontal grid line
     gridLines.push(
       `<path d="${wobbleLine(PADDING.left, y, PADDING.left + PLOT_WIDTH, y, seedCounter++, 1.0)}" class="grid-line" />`
     );
@@ -226,17 +189,9 @@ export function renderChart(datasets: ChartData[]): string {
     );
   }
 
-  // --- Wobbly axis lines (left and bottom) ---
-  const axisLeft = wobbleLine(
-    PADDING.left, PADDING.top,
-    PADDING.left, PADDING.top + PLOT_HEIGHT,
-    seedCounter++, 1.2
-  );
-  const axisBottom = wobbleLine(
-    PADDING.left, PADDING.top + PLOT_HEIGHT,
-    PADDING.left + PLOT_WIDTH, PADDING.top + PLOT_HEIGHT,
-    seedCounter++, 1.2
-  );
+  // --- Axis lines ---
+  const axisLeft = wobbleLine(PADDING.left, PADDING.top, PADDING.left, PADDING.top + PLOT_HEIGHT, seedCounter++, 1.2);
+  const axisBottom = wobbleLine(PADDING.left, PADDING.top + PLOT_HEIGHT, PADDING.left + PLOT_WIDTH, PADDING.top + PLOT_HEIGHT, seedCounter++, 1.2);
 
   // --- X-axis labels ---
   const xLabels: string[] = [];
@@ -248,12 +203,11 @@ export function renderChart(datasets: ChartData[]): string {
     );
   }
 
-  // --- Data paths ---
+  // --- Data paths (keep original order for color assignment) ---
   const paths: string[] = [];
   for (let di = 0; di < datasets.length; di++) {
     const ds = datasets[di];
     const color = COLORS[di % COLORS.length];
-
     const dateToValue = new Map(ds.points.map((p) => [p.date, p.value]));
     const xs: number[] = [];
     const ys: number[] = [];
@@ -274,34 +228,78 @@ export function renderChart(datasets: ChartData[]): string {
     );
   }
 
-  // --- Legend (with colored squares, hand-drawn style) ---
+  // --- Right-side legend (sorted by last value, descending) ---
+  // Build sorted indices: sort by last contribution value descending
+  const sortedIndices = datasets
+    .map((ds, i) => ({ index: i, lastValue: getLastValue(ds) }))
+    .sort((a, b) => b.lastValue - a.lastValue)
+    .map((item) => item.index);
+
+  const legendX = CHART_AREA_WIDTH + 20;
+  const legendStartY = PADDING.top + 15;
+  const defs: string[] = [];
   const legendItems: string[] = [];
-  const legendY = CHART_HEIGHT - 18;
-  let legendX = PADDING.left;
-  for (let di = 0; di < datasets.length; di++) {
+
+  for (let rank = 0; rank < sortedIndices.length; rank++) {
+    const di = sortedIndices[rank];
+    const ds = datasets[di];
     const color = COLORS[di % COLORS.length];
-    const name = escapeXml(datasets[di].username);
-    // Small colored square marker
+    const name = escapeXml(ds.username);
+    const y = legendStartY + rank * LEGEND_ITEM_HEIGHT;
+    const cx = legendX + AVATAR_RADIUS;
+    const cy = y + AVATAR_RADIUS;
+    const clipId = `avatar-clip-${rank}`;
+
+    // Clip path for circular avatar
+    defs.push(`<clipPath id="${clipId}"><circle cx="${cx}" cy="${cy}" r="${AVATAR_RADIUS - 2}" /></clipPath>`);
+
+    // Colored ring (border)
     legendItems.push(
-      `<rect x="${legendX}" y="${legendY - 8}" width="12" height="12" rx="2" fill="${color}" />` +
-      `<text x="${legendX + 18}" y="${legendY + 3}" class="legend-label">${name}</text>`
+      `<circle cx="${cx}" cy="${cy}" r="${AVATAR_RADIUS}" fill="none" stroke="${color}" stroke-width="3" />`
     );
-    legendX += name.length * 9 + 45;
+
+    // Avatar image (clipped to circle)
+    if (ds.avatarBase64) {
+      legendItems.push(
+        `<image href="${ds.avatarBase64}" x="${cx - AVATAR_RADIUS + 2}" y="${cy - AVATAR_RADIUS + 2}" width="${AVATAR_SIZE - 4}" height="${AVATAR_SIZE - 4}" clip-path="url(#${clipId})" />`
+      );
+    } else {
+      // Fallback: filled circle with first letter
+      legendItems.push(
+        `<circle cx="${cx}" cy="${cy}" r="${AVATAR_RADIUS - 2}" fill="${color}" opacity="0.2" />`
+      );
+      legendItems.push(
+        `<text x="${cx}" y="${cy + 5}" class="legend-label" text-anchor="middle" fill="${color}" font-size="16">${name.charAt(0).toUpperCase()}</text>`
+      );
+    }
+
+    // Username text
+    legendItems.push(
+      `<text x="${cx + AVATAR_RADIUS + 8}" y="${cy + 5}" class="legend-label">@${name}</text>`
+    );
   }
 
   // --- Title ---
-  const title = `<text x="${CHART_WIDTH / 2}" y="32" class="chart-title" text-anchor="middle">Code War</text>`;
+  const chartCenterX = PADDING.left + PLOT_WIDTH / 2;
+  const title = `<text x="${chartCenterX}" y="32" class="chart-title" text-anchor="middle">Code War</text>`;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART_WIDTH} ${CHART_HEIGHT}" width="${CHART_WIDTH}" height="${CHART_HEIGHT}">
+  // --- Separator line between chart and legend ---
+  const separatorPath = wobbleLine(CHART_AREA_WIDTH, PADDING.top - 10, CHART_AREA_WIDTH, TOTAL_HEIGHT - 15, seedCounter++, 0.8);
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${TOTAL_WIDTH} ${TOTAL_HEIGHT}" width="${TOTAL_WIDTH}" height="${TOTAL_HEIGHT}">
+  <defs>
+    ${defs.join("\n    ")}
+  </defs>
   <style>
     ${fontFaceRule()}
     .chart-bg { fill: #ffffff; }
     .grid-line { stroke: #ddd; stroke-width: 1; fill: none; }
     .axis-line { stroke: #333; stroke-width: 1.5; fill: none; }
-    .axis-label { font-family: 'Virgil', 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive; font-size: 14px; fill: #555; }
-    .chart-title { font-family: 'Virgil', 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive; font-size: 20px; font-weight: normal; fill: #333; }
-    .legend-label { font-family: 'Virgil', 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive; font-size: 14px; fill: #444; }
-    .watermark { font-family: 'Virgil', 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive; font-size: 11px; fill: #bbb; }
+    .separator { stroke: #e0e0e0; stroke-width: 1; fill: none; }
+    .axis-label { font-family: ${FONT_STACK}; font-size: 14px; fill: #555; }
+    .chart-title { font-family: ${FONT_STACK}; font-size: 20px; font-weight: normal; fill: #333; }
+    .legend-label { font-family: ${FONT_STACK}; font-size: 13px; fill: #444; }
+    .watermark { font-family: ${FONT_STACK}; font-size: 11px; fill: #bbb; }
     @keyframes draw {
       from { stroke-dashoffset: 10000; }
       to { stroke-dashoffset: 0; }
@@ -315,36 +313,38 @@ export function renderChart(datasets: ChartData[]): string {
       .chart-bg { fill: #0d1117; }
       .grid-line { stroke: #30363d; }
       .axis-line { stroke: #8b949e; }
+      .separator { stroke: #30363d; }
       .axis-label { fill: #8b949e; }
       .chart-title { fill: #e6edf3; }
       .legend-label { fill: #c9d1d9; }
       .watermark { fill: #484f58; }
     }
   </style>
-  <rect class="chart-bg" width="${CHART_WIDTH}" height="${CHART_HEIGHT}" rx="8" />
+  <rect class="chart-bg" width="${TOTAL_WIDTH}" height="${TOTAL_HEIGHT}" rx="8" />
   ${gridLines.join("\n  ")}
   <path d="${axisLeft}" class="axis-line" />
   <path d="${axisBottom}" class="axis-line" />
   ${xLabels.join("\n  ")}
   ${paths.join("\n  ")}
+  <path d="${separatorPath}" class="separator" />
   ${legendItems.join("\n  ")}
   ${title}
-  <text x="${CHART_WIDTH - 12}" y="${CHART_HEIGHT - 8}" class="watermark" text-anchor="end">codewar.dev</text>
+  <text x="${TOTAL_WIDTH - 12}" y="${TOTAL_HEIGHT - 8}" class="watermark" text-anchor="end">codewar.dev</text>
 </svg>`;
 }
 
 export function renderErrorSvg(message: string): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART_WIDTH} 200" width="${CHART_WIDTH}" height="200">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${TOTAL_WIDTH} 200" width="${TOTAL_WIDTH}" height="200">
   <style>
     ${fontFaceRule()}
     .err-bg { fill: #ffffff; }
-    .err-text { font-family: 'Virgil', 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive; font-size: 16px; fill: #666; }
+    .err-text { font-family: ${FONT_STACK}; font-size: 16px; fill: #666; }
     @media (prefers-color-scheme: dark) {
       .err-bg { fill: #0d1117; }
       .err-text { fill: #8b949e; }
     }
   </style>
-  <rect class="err-bg" width="${CHART_WIDTH}" height="200" rx="8" />
-  <text x="${CHART_WIDTH / 2}" y="100" class="err-text" text-anchor="middle">${escapeXml(message)}</text>
+  <rect class="err-bg" width="${TOTAL_WIDTH}" height="200" rx="8" />
+  <text x="${TOTAL_WIDTH / 2}" y="100" class="err-text" text-anchor="middle">${escapeXml(message)}</text>
 </svg>`;
 }

@@ -1,5 +1,29 @@
 import type { DailyContribution, Env, UserContributions } from "./types";
 
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+export async function fetchAvatar(username: string): Promise<string | undefined> {
+  try {
+    const res = await fetch(`https://github.com/${username}.png?size=80`, {
+      redirect: "follow",
+    });
+    if (!res.ok) return undefined;
+    const buffer = await res.arrayBuffer();
+    const base64 = arrayBufferToBase64(buffer);
+    const contentType = res.headers.get("content-type") || "image/png";
+    return `data:${contentType};base64,${base64}`;
+  } catch {
+    return undefined;
+  }
+}
+
 const GRAPHQL_URL = "https://api.github.com/graphql";
 
 const CONTRIBUTION_YEARS_QUERY = `

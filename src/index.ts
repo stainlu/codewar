@@ -1,5 +1,5 @@
 import type { Env, TimeRange, ChartData } from "./types";
-import { fetchUserContributions } from "./github";
+import { fetchUserContributions, fetchAvatar } from "./github";
 import { filterByRange, applyMovingAverage } from "./smoothing";
 import { renderChart, renderErrorSvg } from "./chart";
 
@@ -72,22 +72,30 @@ async function handleSvg(
     return svgResponse(cachedSvg);
   }
 
-  // Fetch all users in parallel
-  const results = await Promise.allSettled(
-    usernames.map((username) => fetchUserContributions(env, username, range))
-  );
+  // Fetch all users' data and avatars in parallel
+  const [contribResults, avatarResults] = await Promise.all([
+    Promise.allSettled(
+      usernames.map((username) => fetchUserContributions(env, username, range))
+    ),
+    Promise.allSettled(
+      usernames.map((username) => fetchAvatar(username))
+    ),
+  ]);
 
   const datasets: ChartData[] = [];
   const errors: string[] = [];
 
-  for (let i = 0; i < results.length; i++) {
-    const result = results[i];
+  for (let i = 0; i < contribResults.length; i++) {
+    const result = contribResults[i];
     if (result.status === "fulfilled") {
       const filtered = filterByRange(result.value.daily, range);
       const smoothed = applyMovingAverage(filtered, 3);
+      const avatarResult = avatarResults[i];
+      const avatar = avatarResult.status === "fulfilled" ? avatarResult.value : undefined;
       datasets.push({
         username: result.value.username,
         points: smoothed,
+        avatarBase64: avatar,
       });
     } else {
       errors.push(`${usernames[i]}: ${result.reason?.message || "unknown error"}`);
