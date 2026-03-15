@@ -1,0 +1,13 @@
+name = "contrib-trends"
+main = "src/index.ts"
+compatibility_date = "2025-03-15"
+
+# Serve static files from site/ directory
+assets = { directory = "./site", binding = "ASSETS" }
+
+# The GITHUB_TOKEN secret is set via: npx wrangler secret put GITHUB_TOKEN
+
+# For local dev, wrangler automatically creates a local KV store
+[[kv_namespaces]]
+binding = "CACHE"
+id = "PLACEHOLDER_KV_ID"

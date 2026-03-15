@@ -1,0 +1,146 @@
+import type { DailyContribution, Env, UserContributions } from "./types";
+
+const GRAPHQL_URL = "https://api.github.com/graphql";
+
+const CONTRIBUTION_YEARS_QUERY = `
+  query($username: String!) {
+    user(login: $username) {
+      contributionsCollection {
+        contributionYears
+      }
+    }
+  }
+`;
+
+const CONTRIBUTIONS_QUERY = `
+  query($username: String!, $from: DateTime!, $to: DateTime!) {
+    user(login: $username) {
+      contributionsCollection(from: $from, to: $to) {
+        contributionCalendar {
+          weeks {
+            contributionDays {
+              contributionCount
+              date
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+async function graphql<T>(
+  token: string,
+  query: string,
+  variables: Record<string, unknown>
+): Promise<T> {
+  const res = await fetch(GRAPHQL_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `bearer ${token}`,
+      "Content-Type": "application/json",
+      "User-Agent": "contrib-trends",
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
+  }
+
+  const json = (await res.json()) as { data?: T; errors?: Array<{ message: string }> };
+
+  if (json.errors?.length) {
+    throw new Error(`GitHub GraphQL error: ${json.errors[0].message}`);
+  }
+
+  if (!json.data) {
+    throw new Error("GitHub GraphQL returned no data");
+  }
+
+  return json.data;
+}
+
+async function fetchContributionYears(
+  token: string,
+  username: string
+): Promise<number[]> {
+  const data = await graphql<{
+    user: { contributionsCollection: { contributionYears: number[] } } | null;
+  }>(token, CONTRIBUTION_YEARS_QUERY, { username });
+
+  if (!data.user) {
+    throw new Error(`User "${username}" not found`);
+  }
+
+  return data.user.contributionsCollection.contributionYears;
+}
+
+async function fetchYearContributions(
+  token: string,
+  username: string,
+  year: number
+): Promise<DailyContribution[]> {
+  const from = `${year}-01-01T00:00:00Z`;
+  const to = `${year}-12-31T23:59:59Z`;
+
+  const data = await graphql<{
+    user: {
+      contributionsCollection: {
+        contributionCalendar: {
+          weeks: Array<{
+            contributionDays: Array<{
+              contributionCount: number;
+              date: string;
+            }>;
+          }>;
+        };
+      };
+    };
+  }>(token, CONTRIBUTIONS_QUERY, { username, from, to });
+
+  const days: DailyContribution[] = [];
+  for (const week of data.user.contributionsCollection.contributionCalendar.weeks) {
+    for (const day of week.contributionDays) {
+      days.push({ date: day.date, count: day.contributionCount });
+    }
+  }
+
+  return days;
+}
+
+export async function fetchUserContributions(
+  env: Env,
+  username: string
+): Promise<UserContributions> {
+  // Check cache first
+  const cacheKey = `contributions:${username.toLowerCase()}`;
+  const cached = await env.CACHE.get(cacheKey, "json");
+  if (cached) {
+    return cached as UserContributions;
+  }
+
+  // Fetch from GitHub
+  const years = await fetchContributionYears(env.GITHUB_TOKEN, username);
+
+  // Fetch all years in parallel
+  const yearResults = await Promise.all(
+    years.map((year) => fetchYearContributions(env.GITHUB_TOKEN, username, year))
+  );
+
+  // Merge and sort by date
+  const daily = yearResults.flat().sort((a, b) => a.date.localeCompare(b.date));
+
+  const result: UserContributions = {
+    username,
+    daily,
+    fetchedAt: Date.now(),
+  };
+
+  // Cache for 24 hours
+  await env.CACHE.put(cacheKey, JSON.stringify(result), {
+    expirationTtl: 86400,
+  });
+
+  return result;
+}
