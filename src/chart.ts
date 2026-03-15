@@ -228,27 +228,70 @@ export function renderChart(datasets: ChartData[]): string {
     );
   }
 
-  // --- Right-side legend (sorted by last value, descending) ---
-  // Build sorted indices: sort by last contribution value descending
-  const sortedIndices = datasets
-    .map((ds, i) => ({ index: i, lastValue: getLastValue(ds) }))
-    .sort((a, b) => b.lastValue - a.lastValue)
-    .map((item) => item.index);
-
+  // --- Right-side legend (aligned to line endpoints) ---
+  // Compute ideal Y for each user based on their last data point
+  const MIN_LABEL_GAP = 30; // minimum px between username texts
   const legendX = CHART_AREA_WIDTH + 20;
-  const legendStartY = PADDING.top + 15;
   const defs: string[] = [];
   const legendItems: string[] = [];
 
-  for (let rank = 0; rank < sortedIndices.length; rank++) {
-    const di = sortedIndices[rank];
+  const legendEntries = datasets.map((ds, di) => {
+    const lastValue = getLastValue(ds);
+    const idealY = PADDING.top + PLOT_HEIGHT - (lastValue / yMax) * PLOT_HEIGHT;
+    return { index: di, idealY };
+  });
+
+  // Sort by idealY ascending (top of chart first = highest value)
+  legendEntries.sort((a, b) => a.idealY - b.idealY);
+
+  // Collision resolution: push labels down, then shift up if overflow
+  const topBound = PADDING.top + AVATAR_RADIUS;
+  const bottomBound = PADDING.top + PLOT_HEIGHT - AVATAR_RADIUS;
+  const positions: number[] = [];
+
+  // Forward pass: push down to avoid overlap
+  let prev = -Infinity;
+  for (const entry of legendEntries) {
+    let y = entry.idealY;
+    if (y < prev + MIN_LABEL_GAP) {
+      y = prev + MIN_LABEL_GAP;
+    }
+    positions.push(y);
+    prev = y;
+  }
+
+  // If last label overflows bottom, shift ALL labels up
+  const overflow = positions[positions.length - 1] - bottomBound;
+  if (overflow > 0) {
+    for (let i = 0; i < positions.length; i++) {
+      positions[i] -= overflow;
+    }
+  }
+
+  // Clamp top label
+  if (positions[0] < topBound) {
+    const shift = topBound - positions[0];
+    for (let i = 0; i < positions.length; i++) {
+      positions[i] += shift;
+    }
+  }
+
+  const resolvedYs = new Map<number, number>();
+  for (let i = 0; i < legendEntries.length; i++) {
+    resolvedYs.set(legendEntries[i].index, positions[i]);
+  }
+
+  // Render in reverse order (lowest value first) so higher-value avatars are on top
+  const renderOrder = [...legendEntries].reverse();
+
+  for (const entry of renderOrder) {
+    const di = entry.index;
     const ds = datasets[di];
     const color = COLORS[di % COLORS.length];
     const name = escapeXml(ds.username);
-    const y = legendStartY + rank * LEGEND_ITEM_HEIGHT;
+    const cy = resolvedYs.get(di)!;
     const cx = legendX + AVATAR_RADIUS;
-    const cy = y + AVATAR_RADIUS;
-    const clipId = `avatar-clip-${rank}`;
+    const clipId = `avatar-clip-${di}`;
 
     // Clip path for circular avatar
     defs.push(`<clipPath id="${clipId}"><circle cx="${cx}" cy="${cy}" r="${AVATAR_RADIUS - 2}" /></clipPath>`);
