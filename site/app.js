@@ -112,7 +112,7 @@ function loadChart() {
     chartLoading.classList.add("hidden");
 
     // Show embed code
-    const markdown = `[![Contribution Trends](${svgUrl})](${siteUrl})`;
+    const markdown = `[![Code War](${svgUrl})](${siteUrl})`;
     embedCode.textContent = markdown;
     embedSection.classList.remove("hidden");
   };

@@ -290,7 +290,7 @@ export function renderChart(datasets: ChartData[]): string {
   }
 
   // --- Title ---
-  const title = `<text x="${CHART_WIDTH / 2}" y="32" class="chart-title" text-anchor="middle">Contribution Trends</text>`;
+  const title = `<text x="${CHART_WIDTH / 2}" y="32" class="chart-title" text-anchor="middle">Code War</text>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART_WIDTH} ${CHART_HEIGHT}" width="${CHART_WIDTH}" height="${CHART_HEIGHT}">
   <style>

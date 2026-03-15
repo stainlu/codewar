@@ -39,7 +39,7 @@ async function graphql<T>(
     headers: {
       Authorization: `bearer ${token}`,
       "Content-Type": "application/json",
-      "User-Agent": "contrib-trends",
+      "User-Agent": "codewar",
     },
     body: JSON.stringify({ query, variables }),
   });
