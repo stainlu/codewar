@@ -11,29 +11,60 @@ body {
   min-height: 100vh;
 }
 
+/* Nav bar */
+.nav-bar {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+}
+
+.nav-logo {
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+  text-decoration: none;
+}
+
+.nav-logo:hover {
+  color: #000;
+}
+
+.nav-github {
+  color: #666;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.nav-github:hover {
+  color: #333;
+}
+
 .container {
   max-width: 860px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 20px 20px 40px;
 }
 
 /* Header */
 header {
   text-align: center;
-  margin-bottom: 36px;
+  margin-bottom: 48px;
 }
 
 .site-title {
-  font-family: 'Caveat', cursive;
-  font-size: 48px;
-  font-weight: 600;
+  font-size: 40px;
+  font-weight: 700;
   color: #222;
   margin-bottom: 8px;
 }
 
 .site-subtitle {
-  font-size: 18px;
-  color: #666;
+  font-size: 16px;
+  color: #888;
 }
 
 /* Builder */
@@ -42,7 +73,7 @@ header {
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   padding: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .input-row {
@@ -187,7 +218,7 @@ header {
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   padding: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
   min-height: 200px;
   display: flex;
   align-items: center;
@@ -244,12 +275,12 @@ header {
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   padding: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .embed-title {
-  font-family: 'Caveat', cursive;
-  font-size: 24px;
+  font-size: 20px;
+  font-weight: 600;
   margin-bottom: 12px;
   color: #333;
 }
@@ -312,12 +343,12 @@ header {
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   padding: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .guide-title {
-  font-family: 'Caveat', cursive;
-  font-size: 22px;
+  font-size: 18px;
+  font-weight: 600;
   margin-bottom: 16px;
 }
 
@@ -332,10 +363,19 @@ header {
   color: #4285F4;
 }
 
+/* Data source */
+.data-source {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
 /* Footer */
 footer {
   text-align: center;
-  padding-top: 20px;
+  padding-top: 32px;
+  border-top: 1px solid #eee;
   font-size: 13px;
   color: #aaa;
 }
@@ -351,7 +391,7 @@ footer a:hover {
 
 /* Responsive */
 @media (max-width: 600px) {
-  .site-title { font-size: 36px; }
+  .site-title { font-size: 32px; }
   .input-row { flex-direction: column; }
   .range-selector { flex-wrap: wrap; }
   .embed-code-box { flex-direction: column; }

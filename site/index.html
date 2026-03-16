@@ -3,17 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Code War — who actually codes more?</title>
+  <title>Code War — Compare GitHub Contributions</title>
   <meta name="description" content="Compare your GitHub contributions with anyone. Embed a Google Trends-style chart on your GitHub profile. Zero auth, one line of markdown.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <nav class="nav-bar">
+    <a href="/" class="nav-logo">Code War</a>
+    <a href="https://github.com/stainlu/codewar" target="_blank" rel="noopener" class="nav-github" aria-label="GitHub">
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </nav>
+
   <div class="container">
     <header>
       <h1 class="site-title">Code War</h1>
-      <p class="site-subtitle">find out who actually codes and who just stars repos.</p>
+      <p class="site-subtitle">Compare GitHub contributions over time.</p>
     </header>
 
     <div class="builder">
@@ -21,7 +28,7 @@
         <input
           type="text"
           id="username-input"
-          placeholder="type a github username and prepare for truth..."
+          placeholder="Enter a GitHub username"
           autocomplete="off"
           spellcheck="false"
         >
@@ -32,10 +39,9 @@
       </div>
 
       <div class="presets">
-        <span class="presets-label">fight these legends:</span>
+        <span class="presets-label">Try:</span>
         <button class="btn btn-preset" data-user="torvalds">torvalds</button>
         <button class="btn btn-preset" data-user="mitchellh">mitchellh</button>
-        <button class="btn btn-preset" data-user="bcherny">bcherny</button>
         <button class="btn btn-preset" data-user="sindresorhus">sindresorhus</button>
         <button class="btn btn-preset" data-user="tj">tj</button>
       </div>
@@ -51,7 +57,7 @@
 
     <div class="chart-container" id="chart-container">
       <div class="chart-placeholder" id="chart-placeholder">
-        <p>add some usernames above. we dare you.</p>
+        <p>Add usernames above to generate a chart.</p>
       </div>
       <div id="chart-spinner" class="chart-spinner hidden"><div class="spinner"></div></div>
       <img id="chart-img" class="chart-img hidden" alt="Code War Chart">
@@ -60,35 +66,36 @@
       </div>
     </div>
 
+    <p class="data-source">Data from the GitHub contributions API · Updated daily</p>
+
     <div class="embed-section hidden" id="embed-section">
-      <h2 class="embed-title">flex on your github profile</h2>
+      <h2 class="embed-title">Embed in your GitHub profile</h2>
       <div class="embed-code-box">
         <code id="embed-code" class="embed-code"></code>
         <button id="copy-btn" class="btn btn-copy">Copy</button>
       </div>
       <p class="embed-hint">
-        paste this into your README. watch visitors question their life choices.
-        <a href="#guide" id="guide-link">no profile README yet? skill issue. here's how:</a>
+        Paste this into your profile README.md.
+        <a href="#guide" id="guide-link">Don't have a profile README? Here's how.</a>
       </p>
     </div>
 
     <div class="guide hidden" id="guide">
-      <h2 class="guide-title">how to create a profile README (takes 30 seconds, you have no excuse)</h2>
+      <h2 class="guide-title">Create a GitHub profile README</h2>
       <ol class="guide-steps">
         <li>Go to <a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a></li>
         <li>Set the repository name to <strong>your exact GitHub username</strong></li>
         <li>Check "Add a README file"</li>
         <li>Click "Create repository"</li>
         <li>Edit the README.md and paste the embed code above</li>
-        <li>Commit — the chart now appears on your GitHub profile. you're welcome.</li>
+        <li>Commit — the chart now appears on your GitHub profile.</li>
       </ol>
     </div>
 
     <footer>
       <p>
-        <a href="https://github.com/stainlu/codewar" target="_blank" rel="noopener">GitHub</a>
-        &middot; powered by mass ego comparison
-        &middot; inspired by <a href="https://star-history.com" target="_blank" rel="noopener">star-history.com</a>
+        Built by <a href="https://github.com/stainlu" target="_blank" rel="noopener">@stainlu</a>
+        &middot; Inspired by <a href="https://star-history.com" target="_blank" rel="noopener">star-history.com</a>
       </p>
     </footer>
   </div>
