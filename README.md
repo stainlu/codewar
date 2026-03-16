@@ -1,7 +1,7 @@
 
 <p align="center">
-  <a href="https://codewar.dev/?users=torvalds,mitchellh,bcherny&range=3m">
-    <img src="https://codewar.dev/api/svg?users=torvalds,mitchellh,bcherny&range=3m" alt="Code War Demo" />
+  <a href="https://codewar.dev/?users=stainlu,torvalds,mitchellh,bcherny&range=3m">
+    <img src="https://codewar.dev/api/svg?users=stainlu,torvalds,mitchellh,bcherny&range=3m&v=3" alt="Code War Demo" />
   </a>
 </p>
 
