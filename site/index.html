@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Code War — Compare GitHub contributions like Google Trends</title>
-  <meta name="description" content="Compare your GitHub contributions with anyone. Embed a Google Trends-style chart on your GitHub profile.">
+  <title>Code War — who actually codes more?</title>
+  <meta name="description" content="Compare your GitHub contributions with anyone. Embed a Google Trends-style chart on your GitHub profile. Zero auth, one line of markdown.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
@@ -13,7 +13,7 @@
   <div class="container">
     <header>
       <h1 class="site-title">Code War</h1>
-      <p class="site-subtitle">Compare your GitHub contributions with anyone.</p>
+      <p class="site-subtitle">find out who actually codes and who just stars repos.</p>
     </header>
 
     <div class="builder">
@@ -21,7 +21,7 @@
         <input
           type="text"
           id="username-input"
-          placeholder="Enter a GitHub username..."
+          placeholder="type a github username and prepare for truth..."
           autocomplete="off"
           spellcheck="false"
         >
@@ -29,11 +29,10 @@
       </div>
 
       <div class="user-tags" id="user-tags">
-        <!-- Tags rendered here -->
       </div>
 
       <div class="presets">
-        <span class="presets-label">Quick add:</span>
+        <span class="presets-label">fight these legends:</span>
         <button class="btn btn-preset" data-user="torvalds">torvalds</button>
         <button class="btn btn-preset" data-user="mitchellh">mitchellh</button>
         <button class="btn btn-preset" data-user="bcherny">bcherny</button>
@@ -52,44 +51,44 @@
 
     <div class="chart-container" id="chart-container">
       <div class="chart-placeholder" id="chart-placeholder">
-        <p>Add GitHub usernames above to generate a chart</p>
+        <p>add some usernames above. we dare you.</p>
       </div>
       <div id="chart-spinner" class="chart-spinner hidden"><div class="spinner"></div></div>
       <img id="chart-img" class="chart-img hidden" alt="Code War Chart">
       <div id="chart-loading" class="chart-loading hidden">
-        <p>Loading contributions...</p>
+        <p>counting commits...</p>
       </div>
     </div>
 
     <div class="embed-section hidden" id="embed-section">
-      <h2 class="embed-title">Embed in your GitHub Profile</h2>
+      <h2 class="embed-title">flex on your github profile</h2>
       <div class="embed-code-box">
         <code id="embed-code" class="embed-code"></code>
         <button id="copy-btn" class="btn btn-copy">Copy</button>
       </div>
       <p class="embed-hint">
-        Paste this into your profile README.
-        <a href="#guide" id="guide-link">Don't have a profile README?</a>
+        paste this into your README. watch visitors question their life choices.
+        <a href="#guide" id="guide-link">no profile README yet? skill issue. here's how:</a>
       </p>
     </div>
 
     <div class="guide hidden" id="guide">
-      <h2 class="guide-title">How to create a GitHub Profile README</h2>
+      <h2 class="guide-title">how to create a profile README (takes 30 seconds, you have no excuse)</h2>
       <ol class="guide-steps">
         <li>Go to <a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a></li>
         <li>Set the repository name to <strong>your exact GitHub username</strong></li>
         <li>Check "Add a README file"</li>
         <li>Click "Create repository"</li>
         <li>Edit the README.md and paste the embed code above</li>
-        <li>Commit — the chart now appears on your GitHub profile!</li>
+        <li>Commit — the chart now appears on your GitHub profile. you're welcome.</li>
       </ol>
     </div>
 
     <footer>
       <p>
         <a href="https://github.com/stainlu/codewar" target="_blank" rel="noopener">GitHub</a>
-        &middot; Built with the GitHub GraphQL API
-        &middot; Inspired by <a href="https://star-history.com" target="_blank" rel="noopener">star-history.com</a>
+        &middot; powered by mass ego comparison
+        &middot; inspired by <a href="https://star-history.com" target="_blank" rel="noopener">star-history.com</a>
       </p>
     </footer>
   </div>

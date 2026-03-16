@@ -8,8 +8,8 @@
 <h1 align="center">Code War</h1>
 
 <p align="center">
-  Compare GitHub contributions like Google Trends.<br>
-  One line of markdown. Zero auth. See who codes more.
+  find out who actually codes and who just talks about it.<br>
+  one line of markdown. zero auth. pure ego damage.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@
 
 ---
 
-## Quick Start
+## Flex on your friends in 10 seconds
 
 Add this to your [GitHub Profile README](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/customizing-your-profile/managing-your-profile-readme):
 
@@ -34,7 +34,7 @@ Add this to your [GitHub Profile README](https://docs.github.com/en/account-and-
 [![Code War](https://codewar.dev/api/svg?users=YOUR_USERNAME,torvalds,mitchellh&range=3m)](https://codewar.dev/?users=YOUR_USERNAME,torvalds,mitchellh&range=3m)
 ```
 
-Replace `YOUR_USERNAME` with your GitHub username. That's it.
+Replace `YOUR_USERNAME` with yours. Prepare for emotional damage.
 
 Or use [codewar.dev](https://codewar.dev) to configure your chart visually and copy the embed code.
 
@@ -54,7 +54,7 @@ Or use [codewar.dev](https://codewar.dev) to configure your chart visually and c
 https://codewar.dev/api/svg?users=torvalds,mitchellh&range=3m
 ```
 
-**Full history:**
+**Full history (for those who want the full ego trip):**
 ```
 https://codewar.dev/api/svg?users=torvalds,mitchellh&range=all
 ```
@@ -63,17 +63,17 @@ https://codewar.dev/api/svg?users=torvalds,mitchellh&range=all
 
 ## Features
 
-- **Google Trends-style chart** — smooth lines comparing daily contributions
+- **Google Trends but for developer ego** — smooth lines comparing daily contributions
 - **GitHub avatars** — circular avatars with colored borders, aligned to line endpoints
-- **Hand-drawn aesthetic** — Virgil font (from Excalidraw) + wobbly grid lines
+- **Hand-drawn aesthetic** — we embedded a 60KB font just for vibes (Virgil from Excalidraw)
 - **Dark mode** — auto-adapts via `prefers-color-scheme`
-- **Zero auth** — no signup, no API key, no config
-- **Fast** — contribution data cached 24h, rendered SVGs cached at edge
-- **Line drawing animation** — curves animate from left to right on load
+- **Zero auth** — we don't want your data, just your contributions
+- **Fast** — unless you're comparing with torvalds, then go make coffee
+- **Satisfying line-drawing animation** — honestly the real reason people use this
 
 ---
 
-## Works Great Alongside
+## Pair it with these for maximum GitHub clout
 
 - [github-readme-stats](https://github.com/anuraghazra/github-readme-stats) — GitHub stats cards
 - [github-readme-streak-stats](https://github.com/DenverCoder1/github-readme-streak-stats) — Contribution streak stats
@@ -118,12 +118,14 @@ Your README                  codewar.dev                GitHub API
 
 ## Contributing
 
-Contributions welcome! Feel free to open issues or submit PRs.
+PRs welcome. Issues also welcome. Memes in issues especially welcome.
 
 ---
 
 ## License
 
-[MIT](LICENSE) — built by [@stainlu](https://github.com/stainlu)
+[MIT](LICENSE) — do whatever you want with it.
 
-Inspired by [star-history.com](https://star-history.com)
+built by [@stainlu](https://github.com/stainlu) who was mass-comparing developers at 3am and thought "this should be a product"
+
+star-history.com showed us repo stars. we said "ok but who actually writes the code?"
