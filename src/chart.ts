@@ -223,8 +223,10 @@ export function renderChart(datasets: ChartData[], self?: string): string {
     }
 
     const pathD = buildSmoothPath(xs, ys);
+    const isSelf = self && ds.username.toLowerCase() === self.toLowerCase();
+    const strokeWidth = isSelf ? 4 : 2;
     paths.push(
-      `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="data-line" style="animation-delay: ${di * 0.15}s" />`
+      `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" class="data-line" style="animation-delay: ${di * 0.15}s" />`
     );
   }
 
