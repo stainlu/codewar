@@ -24,27 +24,41 @@
     </header>
 
     <div class="builder">
-      <div class="input-row">
-        <input
-          type="text"
-          id="username-input"
-          placeholder="Enter a GitHub username"
-          autocomplete="off"
-          spellcheck="false"
-        >
-        <button id="add-btn" class="btn btn-primary">Add</button>
+      <div class="input-group">
+        <label class="input-label" for="self-input">Your username:</label>
+        <div class="input-row">
+          <input
+            type="text"
+            id="self-input"
+            placeholder="Enter your GitHub username"
+            autocomplete="off"
+            spellcheck="false"
+          >
+        </div>
+        <div id="self-tag-container"></div>
       </div>
 
-      <div class="user-tags" id="user-tags">
-      </div>
-
-      <div class="presets">
-        <span class="presets-label">Can you beat:</span>
-        <button class="btn btn-preset" data-user="steipete">steipete</button>
-        <button class="btn btn-preset" data-user="bcherny">bcherny</button>
-        <button class="btn btn-preset" data-user="torvalds">torvalds</button>
-        <button class="btn btn-preset" data-user="mitchellh">mitchellh</button>
-        <button class="btn btn-preset" data-user="karpathy">karpathy</button>
+      <div class="input-group">
+        <label class="input-label" for="target-input">Compare against:</label>
+        <div class="input-row">
+          <input
+            type="text"
+            id="target-input"
+            placeholder="Add a GitHub username to compare"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button id="add-btn" class="btn btn-primary">Add</button>
+        </div>
+        <div class="user-tags" id="target-tags"></div>
+        <div class="presets">
+          <span class="presets-label">Can you beat:</span>
+          <button class="btn btn-preset" data-user="steipete">steipete</button>
+          <button class="btn btn-preset" data-user="bcherny">bcherny</button>
+          <button class="btn btn-preset" data-user="torvalds">torvalds</button>
+          <button class="btn btn-preset" data-user="mitchellh">mitchellh</button>
+          <button class="btn btn-preset" data-user="karpathy">karpathy</button>
+        </div>
       </div>
 
       <div class="range-selector">

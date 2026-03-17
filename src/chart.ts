@@ -150,7 +150,7 @@ function getLastValue(ds: ChartData): number {
   return ds.points[ds.points.length - 1].value;
 }
 
-export function renderChart(datasets: ChartData[]): string {
+export function renderChart(datasets: ChartData[], self?: string): string {
   if (datasets.length === 0 || datasets.every((d) => d.points.length === 0)) {
     return renderErrorSvg("No contribution data found");
   }
@@ -323,9 +323,14 @@ export function renderChart(datasets: ChartData[]): string {
   }
 
   // --- Title (dynamic: "CAN YOU BEAT @topPerformer") ---
-  let topUsername = datasets[0].username;
+  // If self is provided, exclude from title calculation
+  const titleCandidates = self
+    ? datasets.filter(d => d.username.toLowerCase() !== self.toLowerCase())
+    : datasets;
+  const candidates = titleCandidates.length > 0 ? titleCandidates : datasets;
+  let topUsername = candidates[0].username;
   let topAvg = 0;
-  for (const ds of datasets) {
+  for (const ds of candidates) {
     if (ds.points.length === 0) continue;
     const avg = ds.points.reduce((sum, p) => sum + p.value, 0) / ds.points.length;
     if (avg > topAvg) {

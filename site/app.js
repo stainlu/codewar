@@ -1,13 +1,16 @@
 const COLORS = ["#4285F4", "#E34234", "#F5A623", "#2EAD6D", "#9B59B6", "#46BDC6", "#E67E22", "#C2185B"];
 const BASE_URL = location.origin;
 
-let users = [];
+let selfUser = "";
+let targets = [];
 let range = "3m";
 
 // DOM elements
-const usernameInput = document.getElementById("username-input");
+const selfInput = document.getElementById("self-input");
+const targetInput = document.getElementById("target-input");
 const addBtn = document.getElementById("add-btn");
-const userTags = document.getElementById("user-tags");
+const selfTagContainer = document.getElementById("self-tag-container");
+const targetTags = document.getElementById("target-tags");
 const chartImg = document.getElementById("chart-img");
 const chartPlaceholder = document.getElementById("chart-placeholder");
 const chartLoading = document.getElementById("chart-loading");
@@ -21,12 +24,30 @@ const guideLink = document.getElementById("guide-link");
 // Initialize from URL params
 function initFromUrl() {
   const params = new URLSearchParams(location.search);
-  const usersParam = params.get("users");
   const rangeParam = params.get("range");
 
-  if (usersParam) {
-    users = usersParam.split(",").map(u => u.trim()).filter(Boolean);
+  // New format: user + targets
+  const userParam = params.get("user");
+  const targetsParam = params.get("targets");
+  // Legacy format: users (all treated as targets)
+  const usersParam = params.get("users");
+
+  if (userParam) {
+    selfUser = userParam.trim().toLowerCase();
+    selfInput.value = "";
   }
+  if (targetsParam) {
+    targets = targetsParam.split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
+  } else if (usersParam) {
+    // Legacy: if no user param, all go to targets
+    const all = usersParam.split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
+    if (userParam) {
+      targets = all.filter(u => u !== selfUser);
+    } else {
+      targets = all;
+    }
+  }
+
   if (rangeParam && ["1m", "3m", "1y", "all"].includes(rangeParam)) {
     range = rangeParam;
     document.querySelectorAll(".btn-range").forEach(btn => {
@@ -35,35 +56,63 @@ function initFromUrl() {
   }
 
   renderTags();
-  if (users.length > 0) {
+  if (getAllUsers().length > 0) {
     loadChart();
   }
 }
 
+function getAllUsers() {
+  return [selfUser, ...targets].filter(Boolean);
+}
+
 function updateUrl() {
   const params = new URLSearchParams();
-  if (users.length > 0) params.set("users", users.join(","));
+  if (selfUser) params.set("user", selfUser);
+  if (targets.length > 0) params.set("targets", targets.join(","));
   if (range !== "3m") params.set("range", range);
   const qs = params.toString();
   history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
 }
 
-function addUser(username) {
+function setSelf(username) {
   username = username.trim().toLowerCase();
-  if (!username || users.includes(username)) return;
-  if (users.length >= 5) return;
+  if (!username) return;
+  // If this user is already a target, remove from targets
+  targets = targets.filter(u => u !== username);
+  selfUser = username;
+  selfInput.value = "";
+  renderTags();
+  if (getAllUsers().length > 0) loadChart();
+  updateUrl();
+}
 
-  users.push(username);
+function clearSelf() {
+  selfUser = "";
+  renderTags();
+  if (getAllUsers().length > 0) {
+    loadChart();
+  } else {
+    showPlaceholder();
+  }
+  updateUrl();
+}
+
+function addTarget(username) {
+  username = username.trim().toLowerCase();
+  if (!username || targets.includes(username) || username === selfUser) return;
+  if (getAllUsers().length >= 5) return;
+
+  targets.push(username);
   renderTags();
   loadChart();
   updateUrl();
-  usernameInput.value = "";
+  targetInput.value = "";
 }
 
-function removeUser(username) {
-  users = users.filter(u => u !== username);
+function removeTarget(username) {
+  targets = targets.filter(u => u !== username);
   renderTags();
-  if (users.length > 0) {
+  if (getAllUsers().length > 0) {
     loadChart();
   } else {
     showPlaceholder();
@@ -72,11 +121,27 @@ function removeUser(username) {
 }
 
 function renderTags() {
-  userTags.innerHTML = users.map((user, i) => `
+  // Render self tag
+  if (selfUser) {
+    selfTagContainer.innerHTML = `
+      <span class="self-tag">
+        <span class="color-dot" style="background: ${COLORS[0]}"></span>
+        ${selfUser}
+        <span class="remove" onclick="clearSelf()">&times;</span>
+      </span>`;
+    selfInput.classList.add("hidden");
+  } else {
+    selfTagContainer.innerHTML = "";
+    selfInput.classList.remove("hidden");
+  }
+
+  // Render target tags (color offset: if self is set, targets start at color index 1)
+  const colorOffset = selfUser ? 1 : 0;
+  targetTags.innerHTML = targets.map((user, i) => `
     <span class="user-tag">
-      <span class="color-dot" style="background: ${COLORS[i % COLORS.length]}"></span>
+      <span class="color-dot" style="background: ${COLORS[(i + colorOffset) % COLORS.length]}"></span>
       ${user}
-      <span class="remove" onclick="removeUser('${user}')">&times;</span>
+      <span class="remove" onclick="removeTarget('${user}')">&times;</span>
     </span>
   `).join("");
 }
@@ -89,24 +154,24 @@ function showPlaceholder() {
 }
 
 function loadChart() {
-  if (users.length === 0) {
+  const allUsers = getAllUsers();
+  if (allUsers.length === 0) {
     showPlaceholder();
     return;
   }
 
   const hasExistingChart = !chartImg.classList.contains("hidden");
 
-  // If no chart yet, show loading text. Otherwise keep existing chart + show spinner.
   chartPlaceholder.classList.add("hidden");
   if (!hasExistingChart) {
     chartLoading.classList.remove("hidden");
   }
   chartSpinner.classList.remove("hidden");
 
-  const svgUrl = `${BASE_URL}/api/svg?users=${users.join(",")}&range=${range}`;
-  const siteUrl = `${BASE_URL}/?users=${users.join(",")}&range=${range}`;
+  const selfParam = selfUser ? `&self=${selfUser}` : "";
+  const svgUrl = `${BASE_URL}/api/svg?users=${allUsers.join(",")}&range=${range}${selfParam}`;
+  const siteUrl = `${BASE_URL}/?user=${selfUser}&targets=${targets.join(",")}&range=${range}`;
 
-  // Preload new SVG in background, swap when ready
   const img = new Image();
   img.onload = () => {
     chartImg.src = svgUrl;
@@ -114,7 +179,6 @@ function loadChart() {
     chartLoading.classList.add("hidden");
     chartSpinner.classList.add("hidden");
 
-    // Show embed code
     const markdown = `[![Code War](${svgUrl})](${siteUrl})`;
     embedCode.textContent = markdown;
     embedSection.classList.remove("hidden");
@@ -131,10 +195,14 @@ function loadChart() {
 }
 
 // Event listeners
-addBtn.addEventListener("click", () => addUser(usernameInput.value));
+selfInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") setSelf(selfInput.value);
+});
 
-usernameInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") addUser(usernameInput.value);
+addBtn.addEventListener("click", () => addTarget(targetInput.value));
+
+targetInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") addTarget(targetInput.value);
 });
 
 // Range buttons
@@ -143,7 +211,7 @@ document.querySelectorAll(".btn-range").forEach(btn => {
     range = btn.dataset.range;
     document.querySelectorAll(".btn-range").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    if (users.length > 0) {
+    if (getAllUsers().length > 0) {
       loadChart();
       updateUrl();
     }
@@ -152,7 +220,7 @@ document.querySelectorAll(".btn-range").forEach(btn => {
 
 // Preset buttons
 document.querySelectorAll(".btn-preset").forEach(btn => {
-  btn.addEventListener("click", () => addUser(btn.dataset.user));
+  btn.addEventListener("click", () => addTarget(btn.dataset.user));
 });
 
 // Copy button
@@ -173,8 +241,9 @@ guideLink.addEventListener("click", (e) => {
   guideSection.classList.toggle("hidden");
 });
 
-// Make removeUser available globally for onclick handlers
-window.removeUser = removeUser;
+// Make functions available globally for onclick handlers
+window.removeTarget = removeTarget;
+window.clearSelf = clearSelf;
 
 // Init
 initFromUrl();

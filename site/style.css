@@ -76,10 +76,22 @@ header {
   margin-bottom: 32px;
 }
 
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 6px;
+}
+
 .input-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .input-row input {
@@ -155,6 +167,31 @@ header {
 }
 
 .user-tag .remove:hover {
+  color: #e34234;
+}
+
+.self-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.self-tag .remove {
+  cursor: pointer;
+  color: #999;
+  font-size: 16px;
+  line-height: 1;
+  margin-left: 2px;
+}
+
+.self-tag .remove:hover {
   color: #e34234;
 }
 

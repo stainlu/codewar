@@ -64,9 +64,10 @@ async function handleSvg(
   }
 
   const range = rangeParam as TimeRange;
+  const selfUser = url.searchParams.get("self") || "";
 
-  // Check SVG cache first (keyed by sorted users + range)
-  const svgCacheKey = `svg:${[...usernames].sort().join(",")}:${range}`;
+  // Check SVG cache first (keyed by sorted users + range + self)
+  const svgCacheKey = `svg:${[...usernames].sort().join(",")}:${range}:${selfUser}`;
   const cachedSvg = await env.CACHE.get(svgCacheKey);
   if (cachedSvg) {
     return svgResponse(cachedSvg);
@@ -106,7 +107,7 @@ async function handleSvg(
     return svgResponse(renderErrorSvg(errors.join("; ")));
   }
 
-  const svg = renderChart(datasets);
+  const svg = renderChart(datasets, selfUser || undefined);
 
   // Cache the rendered SVG for 24 hours
   await env.CACHE.put(svgCacheKey, svg, { expirationTtl: 86400 });
