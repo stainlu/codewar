@@ -162,7 +162,10 @@ async function handlePng(
   // Wait for draw animation to complete
   await new Promise(r => setTimeout(r, 1500));
 
-  const pngBuffer = await page.screenshot({ type: "png" }) as Buffer;
+  const pngBuffer = await page.screenshot({
+    type: "png",
+    clip: { x: 0, y: 0, width: 1200, height: 628 },
+  }) as Buffer;
   await browser.close();
 
   // Cache PNG for 24 hours
