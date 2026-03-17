@@ -4,6 +4,7 @@ const BASE_URL = location.origin;
 let selfUser = "";
 let targets = [];
 let range = "3m";
+let theme = "light";
 let beatUser = ""; // top performer among targets, computed after chart loads
 
 // DOM elements
@@ -177,7 +178,8 @@ function loadChart() {
   chartSpinner.classList.remove("hidden");
 
   const selfParam = selfUser ? `&self=${selfUser}` : "";
-  const svgUrl = `${BASE_URL}/api/svg?users=${allUsers.join(",")}&range=${range}${selfParam}`;
+  const themeParam = theme === "dark" ? `&theme=dark` : "";
+  const svgUrl = `${BASE_URL}/api/svg?users=${allUsers.join(",")}&range=${range}${selfParam}${themeParam}`;
   const siteUrl = `${BASE_URL}/?user=${selfUser}&targets=${targets.join(",")}&range=${range}`;
 
   const img = new Image();
@@ -241,6 +243,18 @@ document.querySelectorAll(".btn-range").forEach(btn => {
     if (getAllUsers().length > 0) {
       loadChart();
       updateUrl();
+    }
+  });
+});
+
+// Theme buttons
+document.querySelectorAll(".btn-theme").forEach(btn => {
+  btn.addEventListener("click", () => {
+    theme = btn.dataset.theme;
+    document.querySelectorAll(".btn-theme").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    if (getAllUsers().length > 0) {
+      loadChart();
     }
   });
 });

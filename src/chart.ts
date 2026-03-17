@@ -150,7 +150,7 @@ function getLastValue(ds: ChartData): number {
   return ds.points[ds.points.length - 1].value;
 }
 
-export function renderChart(datasets: ChartData[], self?: string): string {
+export function renderChart(datasets: ChartData[], self?: string, theme: "light" | "dark" = "light"): string {
   if (datasets.length === 0 || datasets.every((d) => d.points.length === 0)) {
     return renderErrorSvg("No contribution data found");
   }
@@ -357,14 +357,14 @@ export function renderChart(datasets: ChartData[], self?: string): string {
   </defs>
   <style>
     ${fontFaceRule()}
-    .chart-bg { fill: #ffffff; }
-    .grid-line { stroke: #ddd; stroke-width: 1; fill: none; }
-    .axis-line { stroke: #333; stroke-width: 1.5; fill: none; }
-    .separator { stroke: #e0e0e0; stroke-width: 1; fill: none; }
-    .axis-label { font-family: ${FONT_STACK}; font-size: 14px; fill: #555; }
-    .chart-title { font-family: ${FONT_STACK}; font-size: 36px; font-weight: normal; fill: #333; }
-    .legend-label { font-family: ${FONT_STACK}; font-size: 13px; fill: #444; }
-    .watermark { font-family: ${FONT_STACK}; font-size: 11px; fill: #bbb; }
+    .chart-bg { fill: ${theme === "dark" ? "#0d1117" : "#ffffff"}; }
+    .grid-line { stroke: ${theme === "dark" ? "#30363d" : "#ddd"}; stroke-width: 1; fill: none; }
+    .axis-line { stroke: ${theme === "dark" ? "#8b949e" : "#333"}; stroke-width: 1.5; fill: none; }
+    .separator { stroke: ${theme === "dark" ? "#30363d" : "#e0e0e0"}; stroke-width: 1; fill: none; }
+    .axis-label { font-family: ${FONT_STACK}; font-size: 14px; fill: ${theme === "dark" ? "#8b949e" : "#555"}; }
+    .chart-title { font-family: ${FONT_STACK}; font-size: 36px; font-weight: normal; fill: ${theme === "dark" ? "#e6edf3" : "#333"}; }
+    .legend-label { font-family: ${FONT_STACK}; font-size: 13px; fill: ${theme === "dark" ? "#c9d1d9" : "#444"}; }
+    .watermark { font-family: ${FONT_STACK}; font-size: 11px; fill: ${theme === "dark" ? "#484f58" : "#bbb"}; }
     @keyframes draw {
       from { stroke-dashoffset: 10000; }
       to { stroke-dashoffset: 0; }
@@ -373,16 +373,6 @@ export function renderChart(datasets: ChartData[], self?: string): string {
       stroke-dasharray: 10000;
       stroke-dashoffset: 10000;
       animation: draw 1s ease-out forwards;
-    }
-    @media (prefers-color-scheme: dark) {
-      .chart-bg { fill: #0d1117; }
-      .grid-line { stroke: #30363d; }
-      .axis-line { stroke: #8b949e; }
-      .separator { stroke: #30363d; }
-      .axis-label { fill: #8b949e; }
-      .chart-title { fill: #e6edf3; }
-      .legend-label { fill: #c9d1d9; }
-      .watermark { fill: #484f58; }
     }
   </style>
   <rect class="chart-bg" width="${TOTAL_WIDTH}" height="${TOTAL_HEIGHT}" rx="8" />
@@ -399,16 +389,12 @@ export function renderChart(datasets: ChartData[], self?: string): string {
 </svg>`;
 }
 
-export function renderErrorSvg(message: string): string {
+export function renderErrorSvg(message: string, theme: "light" | "dark" = "light"): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${TOTAL_WIDTH} 200" width="${TOTAL_WIDTH}" height="200">
   <style>
     ${fontFaceRule()}
-    .err-bg { fill: #ffffff; }
-    .err-text { font-family: ${FONT_STACK}; font-size: 16px; fill: #666; }
-    @media (prefers-color-scheme: dark) {
-      .err-bg { fill: #0d1117; }
-      .err-text { fill: #8b949e; }
-    }
+    .err-bg { fill: ${theme === "dark" ? "#0d1117" : "#ffffff"}; }
+    .err-text { font-family: ${FONT_STACK}; font-size: 16px; fill: ${theme === "dark" ? "#8b949e" : "#666"}; }
   </style>
   <rect class="err-bg" width="${TOTAL_WIDTH}" height="200" rx="8" />
   <text x="${TOTAL_WIDTH / 2}" y="100" class="err-text" text-anchor="middle">${escapeXml(message)}</text>

@@ -5,6 +5,7 @@ import { renderChart, renderErrorSvg } from "./chart";
 import puppeteer from "@cloudflare/puppeteer";
 
 const VALID_RANGES = new Set(["1m", "3m", "1y", "all"]);
+const VALID_THEMES = new Set(["light", "dark"]);
 const MAX_USERS = 5;
 
 function corsHeaders(): HeadersInit {
@@ -39,9 +40,12 @@ function parseChartParams(url: URL) {
   const usersParam = url.searchParams.get("users");
   const rangeParam = url.searchParams.get("range") || "3m";
   const selfUser = url.searchParams.get("self") || "";
+  const themeParam = url.searchParams.get("theme") || "light";
 
   if (!usersParam) return { error: "Missing ?users= parameter" };
   if (!VALID_RANGES.has(rangeParam)) return { error: `Invalid range "${rangeParam}"` };
+
+  const theme = VALID_THEMES.has(themeParam) ? themeParam as "light" | "dark" : "light" as const;
 
   const usernames = usersParam
     .split(",")
@@ -51,7 +55,7 @@ function parseChartParams(url: URL) {
 
   if (usernames.length === 0) return { error: "No usernames provided" };
 
-  return { usernames, range: rangeParam as TimeRange, selfUser };
+  return { usernames, range: rangeParam as TimeRange, selfUser, theme };
 }
 
 /** Generate SVG string for given params (shared by /api/svg and /api/png). */
@@ -59,10 +63,11 @@ async function generateSvg(
   env: Env,
   usernames: string[],
   range: TimeRange,
-  selfUser: string
+  selfUser: string,
+  theme: "light" | "dark" = "light"
 ): Promise<string> {
-  // Check SVG cache first
-  const svgCacheKey = `svg:${[...usernames].sort().join(",")}:${range}:${selfUser}`;
+  // Check SVG cache first (theme included in key)
+  const svgCacheKey = `svg:${[...usernames].sort().join(",")}:${range}:${selfUser}:${theme}`;
   const cachedSvg = await env.CACHE.get(svgCacheKey);
   if (cachedSvg) return cachedSvg;
 
@@ -97,10 +102,10 @@ async function generateSvg(
   }
 
   if (datasets.length === 0) {
-    return renderErrorSvg(errors.join("; "));
+    return renderErrorSvg(errors.join("; "), theme);
   }
 
-  const svg = renderChart(datasets, selfUser || undefined);
+  const svg = renderChart(datasets, selfUser || undefined, theme);
 
   // Cache for 24 hours
   await env.CACHE.put(svgCacheKey, svg, { expirationTtl: 86400 });
@@ -115,10 +120,10 @@ async function handleSvg(
   const url = new URL(request.url);
   const params = parseChartParams(url);
   if ("error" in params) {
-    return svgResponse(renderErrorSvg(params.error));
+    return svgResponse(renderErrorSvg(params.error as string));
   }
 
-  const svg = await generateSvg(env, params.usernames, params.range, params.selfUser);
+  const svg = await generateSvg(env, params.usernames, params.range, params.selfUser, params.theme);
   return svgResponse(svg);
 }
 
@@ -129,13 +134,13 @@ async function handlePng(
   const url = new URL(request.url);
   const params = parseChartParams(url);
   if ("error" in params) {
-    return svgResponse(renderErrorSvg(params.error));
+    return svgResponse(renderErrorSvg(params.error as string));
   }
 
-  const { usernames, range, selfUser } = params;
+  const { usernames, range, selfUser, theme } = params;
 
   // Check PNG cache first
-  const pngCacheKey = `png:${[...usernames].sort().join(",")}:${range}:${selfUser}`;
+  const pngCacheKey = `png:${[...usernames].sort().join(",")}:${range}:${selfUser}:${theme}`;
   const cachedPng = await env.CACHE.get(pngCacheKey, "arrayBuffer");
   if (cachedPng) {
     return new Response(cachedPng, {
@@ -149,7 +154,8 @@ async function handlePng(
 
   // Use Cloudflare Browser Rendering to screenshot the SVG
   const selfParam = selfUser ? `&self=${selfUser}` : "";
-  const svgUrl = `https://codewar.dev/api/svg?users=${usernames.join(",")}&range=${range}${selfParam}`;
+  const themeParam = theme === "dark" ? `&theme=dark` : "";
+  const svgUrl = `https://codewar.dev/api/svg?users=${usernames.join(",")}&range=${range}${selfParam}${themeParam}`;
 
   const browser = await puppeteer.launch(env.BROWSER);
   const page = await browser.newPage();

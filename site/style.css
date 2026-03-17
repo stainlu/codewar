@@ -256,10 +256,19 @@ header {
   color: #fff;
 }
 
-.btn-range.active {
+.btn-range.active,
+.btn-theme.active {
   background: #4285F4;
   color: #fff;
   border-color: #4285F4;
+}
+
+.btn-theme {
+  padding: 5px 14px;
+  font-size: 13px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  color: #555;
 }
 
 /* Chart */

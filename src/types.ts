@@ -28,3 +28,4 @@ export interface ChartData {
 }
 
 export type TimeRange = "1m" | "3m" | "1y" | "all";
+export type Theme = "light" | "dark";

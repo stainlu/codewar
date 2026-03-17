@@ -19,7 +19,7 @@ custom_domain = true
 
 [[kv_namespaces]]
 binding = "CACHE"
-id = "d9ed367a98744eeaa7c33e73c63bcc58"
+id = "d068f4a24fcc4b79b8af3dbbfea011b6"
 
 [browser]
 binding = "BROWSER"
