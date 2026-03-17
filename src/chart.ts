@@ -322,9 +322,24 @@ export function renderChart(datasets: ChartData[]): string {
     );
   }
 
-  // --- Title ---
+  // --- Title (dynamic: "CAN YOU BEAT @topPerformer") ---
+  let topUsername = datasets[0].username;
+  let topAvg = 0;
+  for (const ds of datasets) {
+    if (ds.points.length === 0) continue;
+    const avg = ds.points.reduce((sum, p) => sum + p.value, 0) / ds.points.length;
+    if (avg > topAvg) {
+      topAvg = avg;
+      topUsername = ds.username;
+    }
+  }
   const chartCenterX = PADDING.left + PLOT_WIDTH / 2;
-  const title = `<text x="${chartCenterX}" y="32" class="chart-title" text-anchor="middle">Code War</text>`;
+  const titleText = escapeXml(`CAN YOU BEAT @${topUsername}`);
+  const title = `<text x="${chartCenterX}" y="32" class="chart-title" text-anchor="middle">${titleText}</text>`;
+
+  // --- Y-axis label ---
+  const yAxisLabelY = PADDING.top + PLOT_HEIGHT / 2;
+  const yAxisLabel = `<text x="15" y="${yAxisLabelY}" class="axis-label" text-anchor="middle" transform="rotate(-90, 15, ${yAxisLabelY})">contributions</text>`;
 
   // --- Separator line between chart and legend ---
   const separatorPath = wobbleLine(CHART_AREA_WIDTH, PADDING.top - 10, CHART_AREA_WIDTH, TOTAL_HEIGHT - 15, seedCounter++, 0.8);
@@ -372,6 +387,7 @@ export function renderChart(datasets: ChartData[]): string {
   <path d="${separatorPath}" class="separator" />
   ${legendItems.join("\n  ")}
   ${title}
+  ${yAxisLabel}
   <text x="${TOTAL_WIDTH - 12}" y="${TOTAL_HEIGHT - 8}" class="watermark" text-anchor="end">codewar.dev</text>
 </svg>`;
 }
