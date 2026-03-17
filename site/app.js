@@ -4,6 +4,7 @@ const BASE_URL = location.origin;
 let selfUser = "";
 let targets = [];
 let range = "3m";
+let beatUser = ""; // top performer among targets, computed after chart loads
 
 // DOM elements
 const selfInput = document.getElementById("self-input");
@@ -183,7 +184,25 @@ function loadChart() {
     const markdown = `[![Code War](${svgUrl})](${siteUrl})`;
     embedCode.textContent = markdown;
     embedSection.classList.remove("hidden");
-    shareXBtn.classList.remove("hidden");
+
+    // Fetch data to determine top performer for share button
+    const targetUsers = targets.length > 0 ? targets : allUsers;
+    fetch(`${BASE_URL}/api/data?users=${targetUsers.join(",")}&range=${range}`)
+      .then(r => r.json())
+      .then(data => {
+        let topAvg = 0;
+        beatUser = targetUsers[0] || "";
+        for (const ds of data.datasets) {
+          if (ds.points.length === 0) continue;
+          const avg = ds.points.reduce((s, p) => s + p.value, 0) / ds.points.length;
+          if (avg > topAvg) { topAvg = avg; beatUser = ds.username; }
+        }
+        shareXBtn.classList.remove("hidden");
+      })
+      .catch(() => {
+        beatUser = targetUsers[0] || "";
+        shareXBtn.classList.remove("hidden");
+      });
   };
   img.onerror = () => {
     chartLoading.classList.add("hidden");
@@ -239,7 +258,6 @@ copyBtn.addEventListener("click", () => {
 
 // Share on X
 shareXBtn.addEventListener("click", () => {
-  const beatUser = targets.length > 0 ? targets[0] : selfUser;
   const shareUrl = `${BASE_URL}/?user=${selfUser}&targets=${targets.join(",")}&range=${range}`;
   const text = `CAN YOU BEAT @${beatUser}?`;
   window.open(`https://x.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`, "_blank");

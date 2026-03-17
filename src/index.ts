@@ -254,9 +254,6 @@ async function handlePageWithOgTags(
     return env.ASSETS.fetch(request);
   }
 
-  // Use first target as the "beat" username for OG title
-  const beatUser = targets.length > 0 ? targets[0] : allUsers[0];
-
   // Build image URLs
   const selfParam = selfUser ? `&self=${selfUser}` : "";
   const pngUrl = `https://codewar.dev/api/png?users=${allUsers.join(",")}&range=${range}${selfParam}`;
@@ -264,12 +261,12 @@ async function handlePageWithOgTags(
 
   const ogTags = `
     <meta property="og:type" content="website">
-    <meta property="og:title" content="CAN YOU BEAT @${beatUser}?">
+    <meta property="og:title" content="Code War — Compare GitHub Contributions">
     <meta property="og:description" content="Compare GitHub contributions over time on codewar.dev">
     <meta property="og:image" content="${pngUrl}">
     <meta property="og:url" content="${pageUrl}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CAN YOU BEAT @${beatUser}?">
+    <meta name="twitter:title" content="Code War — Compare GitHub Contributions">
     <meta name="twitter:description" content="Compare GitHub contributions over time">
     <meta name="twitter:image" content="${pngUrl}">`;
 
