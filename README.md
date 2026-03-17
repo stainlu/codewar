@@ -1,131 +1,114 @@
 
 <p align="center">
-  <a href="https://codewar.dev/?users=stainlu,torvalds,mitchellh,bcherny&range=3m">
-    <img src="https://codewar.dev/api/svg?users=stainlu,torvalds,mitchellh,bcherny&range=3m&v=3" alt="Code War Demo" />
+  <a href="https://codewar.dev/?user=stainlu&targets=torvalds,mitchellh,bcherny&range=3m">
+    <img src="https://codewar.dev/api/svg?users=stainlu,torvalds,mitchellh,bcherny&range=3m&self=stainlu&v=5" alt="CAN YOU BEAT @bcherny?" />
   </a>
 </p>
 
-<h1 align="center">Code War</h1>
+<h1 align="center">CAN YOU BEAT @bcherny?</h1>
 
 <p align="center">
-  find out who actually codes and who just talks about it.<br>
-  one line of markdown. zero auth. pure ego damage.
+  Compare your GitHub contributions against anyone.<br>
+  Embed in your profile. Share on X. Zero auth.
+</p>
+
+<p align="center">
+  <a href="https://codewar.dev"><strong>codewar.dev</strong></a>
 </p>
 
 <p align="center">
   <a href="https://codewar.dev">
-    <img src="https://img.shields.io/badge/website-codewar.dev-blue" alt="Website" />
-  </a>
-  <a href="https://github.com/stainlu/codewar/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/stainlu/codewar" alt="License" />
+    <img src="https://img.shields.io/badge/try_it-codewar.dev-blue" alt="Try it" />
   </a>
   <a href="https://github.com/stainlu/codewar/stargazers">
     <img src="https://img.shields.io/github/stars/stainlu/codewar" alt="Stars" />
+  </a>
+  <a href="https://github.com/stainlu/codewar/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/stainlu/codewar" alt="License" />
   </a>
 </p>
 
 ---
 
-## Flex on your friends in 10 seconds
+## Embed in your GitHub profile
 
-Add this to your [GitHub Profile README](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/customizing-your-profile/managing-your-profile-readme):
+Add one line to your [profile README](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/customizing-your-profile/managing-your-profile-readme):
 
 ```markdown
-[![Code War](https://codewar.dev/api/svg?users=YOUR_USERNAME,torvalds,mitchellh&range=3m)](https://codewar.dev/?users=YOUR_USERNAME,torvalds,mitchellh&range=3m)
+[![Code War](https://codewar.dev/api/svg?users=YOUR_USERNAME,torvalds,bcherny&range=3m&self=YOUR_USERNAME)](https://codewar.dev/?user=YOUR_USERNAME&targets=torvalds,bcherny&range=3m)
 ```
 
-Replace `YOUR_USERNAME` with yours. Prepare for emotional damage.
-
-Or use [codewar.dev](https://codewar.dev) to configure your chart visually and copy the embed code.
+Replace `YOUR_USERNAME` with yours. Or use [codewar.dev](https://codewar.dev) to build your chart visually and copy the embed code.
 
 ---
 
-## Options
+## Share on X
+
+Every chart generates a Twitter Card automatically. Click "Share on X" on the site, or post any codewar.dev link — the chart appears as the preview image.
+
+---
+
+## How it works
 
 | Parameter | Description | Values |
 |-----------|-------------|--------|
-| `users` | GitHub usernames to compare (comma-separated, max 5) | `torvalds,mitchellh` |
+| `users` | GitHub usernames (comma-separated, max 5) | `torvalds,bcherny` |
 | `range` | Time range | `1m`, `3m`, `1y`, `all` |
+| `self` | Your username (excluded from title, thicker line) | `stainlu` |
 
-### Examples
-
-**3-month comparison (default):**
-```
-https://codewar.dev/api/svg?users=torvalds,mitchellh&range=3m
-```
-
-**Full history (for those who want the full ego trip):**
-```
-https://codewar.dev/api/svg?users=torvalds,mitchellh&range=all
-```
+The chart title dynamically shows **CAN YOU BEAT @{top performer}** — the user with the highest average contributions in the selected range (excluding yourself).
 
 ---
 
 ## Features
 
-- **Google Trends but for developer ego** — smooth lines comparing daily contributions
-- **GitHub avatars** — circular avatars with colored borders, aligned to line endpoints
-- **Hand-drawn aesthetic** — we embedded a 60KB font just for vibes (Virgil from Excalidraw)
+- **Google Trends for GitHub contributions** — smooth lines comparing daily commits
+- **Dynamic title** — "CAN YOU BEAT @xxx" challenges you to outcode the best
+- **Hand-drawn aesthetic** — Virgil font from Excalidraw, wobbly grid lines
+- **GitHub avatars** — circular avatars with colored borders
 - **Dark mode** — auto-adapts via `prefers-color-scheme`
-- **Zero auth** — we don't want your data, just your contributions
-- **Fast** — unless you're comparing with torvalds, then go make coffee
-- **Satisfying line-drawing animation** — honestly the real reason people use this
+- **Twitter Cards** — share any link, chart appears as preview image
+- **Zero auth** — no tokens, no login, just usernames
 
 ---
 
-## Pair it with these for maximum GitHub clout
-
-- [github-readme-stats](https://github.com/anuraghazra/github-readme-stats) — GitHub stats cards
-- [github-readme-streak-stats](https://github.com/DenverCoder1/github-readme-streak-stats) — Contribution streak stats
-- [github-profile-trophy](https://github.com/ryo-ma/github-profile-trophy) — Trophy display
-
----
-
-## How It Works
+## Tech
 
 ```
-Your README                  codewar.dev                GitHub API
-     │                            │                          │
-     │  <img src="codewar.dev/    │                          │
-     │   api/svg?users=...">      │                          │
-     │ ──────────────────────────>│                          │
-     │                            │  GraphQL: contributions  │
-     │                            │ ────────────────────────>│
-     │                            │                          │
-     │                            │  <── daily counts + avatar│
-     │                            │                          │
-     │    <── SVG chart            │                          │
-     │        (cached 24h)        │                          │
+Your README / X post          codewar.dev               GitHub API
+        │                          │                         │
+        │  img src / og:image      │                         │
+        │ ────────────────────────>│                         │
+        │                          │  GraphQL: contributions │
+        │                          │ ───────────────────────>│
+        │                          │                         │
+        │                          │  <── daily counts       │
+        │                          │                         │
+        │    <── SVG (cached 24h)  │                         │
 ```
 
-- **Data**: GitHub GraphQL API (`contributionsCollection`)
-- **Rendering**: Server-side SVG with embedded Virgil font
+- **Rendering**: Server-side SVG with embedded Virgil font (WOFF2)
 - **Hosting**: Cloudflare Workers (edge-deployed globally)
-- **Caching**: Cloudflare KV (contribution data 24h, rendered SVGs 24h)
+- **OG Images**: Cloudflare Browser Rendering (Puppeteer screenshots SVG → PNG)
+- **Caching**: Cloudflare KV (24h for data + rendered images)
 
 ---
 
-## Self-Hosting
+## Self-hosting
 
-1. Clone the repo
-2. `npm install`
-3. Create a [GitHub Personal Access Token](https://github.com/settings/tokens) (no scopes needed)
-4. `cp .dev.vars.example .dev.vars` and add your token
-5. `npx wrangler dev` for local development
-6. `npx wrangler deploy` to deploy to Cloudflare Workers
-
----
-
-## Contributing
-
-PRs welcome. Issues also welcome. Memes in issues especially welcome.
+```bash
+git clone https://github.com/stainlu/codewar.git
+cd codewar && npm install
+# Create a GitHub token (no scopes needed): https://github.com/settings/tokens
+cp .dev.vars.example .dev.vars  # add your token
+npx wrangler dev                # local dev
+npx wrangler deploy             # deploy to Cloudflare Workers
+```
 
 ---
 
 ## License
 
-[MIT](LICENSE) — do whatever you want with it.
+[MIT](LICENSE)
 
-built by [@stainlu](https://github.com/stainlu) who was mass-comparing developers at 3am and thought "this should be a product"
-
-star-history.com showed us repo stars. we said "ok but who actually writes the code?"
+Built by [@stainlu](https://github.com/stainlu). Inspired by [star-history.com](https://star-history.com).
