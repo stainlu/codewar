@@ -1,5 +1,6 @@
 node_modules/
 .dev.vars
 .wrangler/
+.playwright-mcp/
 dist/
 LAUNCH_PLAN.md
