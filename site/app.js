@@ -15,6 +15,7 @@ const chartImg = document.getElementById("chart-img");
 const chartPlaceholder = document.getElementById("chart-placeholder");
 const chartLoading = document.getElementById("chart-loading");
 const embedSection = document.getElementById("embed-section");
+const shareXBtn = document.getElementById("share-x-btn");
 const embedCode = document.getElementById("embed-code");
 const copyBtn = document.getElementById("copy-btn");
 const chartSpinner = document.getElementById("chart-spinner");
@@ -182,6 +183,7 @@ function loadChart() {
     const markdown = `[![Code War](${svgUrl})](${siteUrl})`;
     embedCode.textContent = markdown;
     embedSection.classList.remove("hidden");
+    shareXBtn.classList.remove("hidden");
   };
   img.onerror = () => {
     chartLoading.classList.add("hidden");
@@ -233,6 +235,14 @@ copyBtn.addEventListener("click", () => {
       copyBtn.classList.remove("copied");
     }, 2000);
   });
+});
+
+// Share on X
+shareXBtn.addEventListener("click", () => {
+  const beatUser = targets.length > 0 ? targets[0] : selfUser;
+  const shareUrl = `${BASE_URL}/?user=${selfUser}&targets=${targets.join(",")}&range=${range}`;
+  const text = `CAN YOU BEAT @${beatUser}?`;
+  window.open(`https://x.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`, "_blank");
 });
 
 // Guide toggle

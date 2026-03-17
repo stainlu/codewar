@@ -3,7 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2025-03-15"
 
 # Serve static files from site/ directory
-assets = { directory = "./site", binding = "ASSETS" }
+# run_worker_first ensures Worker handles all requests (needed for dynamic OG tags)
+[assets]
+directory = "./site"
+binding = "ASSETS"
+run_worker_first = true
 
 # Custom domain (auto-managed DNS record)
 [[routes]]

@@ -10,5 +10,8 @@
     "@cloudflare/workers-types": "^4.20260313.1",
     "typescript": "^5",
     "wrangler": "^4"
+  },
+  "dependencies": {
+    "@resvg/resvg-wasm": "^2.6.2"
   }
 }

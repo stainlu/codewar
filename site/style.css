@@ -360,6 +360,18 @@ header {
   background: #666;
 }
 
+.btn-share {
+  margin-top: 12px;
+  padding: 10px 20px;
+  background: #000;
+  color: #fff;
+  font-size: 14px;
+}
+
+.btn-share:hover {
+  background: #333;
+}
+
 .embed-hint {
   font-size: 13px;
   color: #888;

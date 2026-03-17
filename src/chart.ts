@@ -342,7 +342,7 @@ export function renderChart(datasets: ChartData[], self?: string): string {
   }
   const chartCenterX = PADDING.left + PLOT_WIDTH / 2;
   const titleText = escapeXml(`CAN YOU BEAT @${topUsername}`);
-  const title = `<text x="${chartCenterX}" y="32" class="chart-title" text-anchor="middle">${titleText}</text>`;
+  const title = `<text x="${chartCenterX}" y="38" class="chart-title" text-anchor="middle">${titleText}</text>`;
 
   // --- Y-axis label ---
   const yAxisLabelY = PADDING.top + PLOT_HEIGHT / 2;
@@ -362,7 +362,7 @@ export function renderChart(datasets: ChartData[], self?: string): string {
     .axis-line { stroke: #333; stroke-width: 1.5; fill: none; }
     .separator { stroke: #e0e0e0; stroke-width: 1; fill: none; }
     .axis-label { font-family: ${FONT_STACK}; font-size: 14px; fill: #555; }
-    .chart-title { font-family: ${FONT_STACK}; font-size: 20px; font-weight: normal; fill: #333; }
+    .chart-title { font-family: ${FONT_STACK}; font-size: 36px; font-weight: normal; fill: #333; }
     .legend-label { font-family: ${FONT_STACK}; font-size: 13px; fill: #444; }
     .watermark { font-family: ${FONT_STACK}; font-size: 11px; fill: #bbb; }
     @keyframes draw {

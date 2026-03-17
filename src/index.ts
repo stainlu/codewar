@@ -2,9 +2,14 @@ import type { Env, TimeRange, ChartData } from "./types";
 import { fetchUserContributions, fetchAvatar } from "./github";
 import { filterByRange, applyMovingAverage } from "./smoothing";
 import { renderChart, renderErrorSvg } from "./chart";
+import { Resvg, initWasm } from "@resvg/resvg-wasm";
+// @ts-ignore — wrangler handles .wasm imports
+import resvgWasm from "../node_modules/@resvg/resvg-wasm/index_bg.wasm";
 
 const VALID_RANGES = new Set(["1m", "3m", "1y", "all"]);
 const MAX_USERS = 5;
+
+let wasmInitialized = false;
 
 function corsHeaders(): HeadersInit {
   return {
@@ -33,25 +38,14 @@ function jsonResponse(data: unknown, status = 200): Response {
   });
 }
 
-async function handleSvg(
-  request: Request,
-  env: Env
-): Promise<Response> {
-  const url = new URL(request.url);
+/** Parse and validate common chart params from a URL. */
+function parseChartParams(url: URL) {
   const usersParam = url.searchParams.get("users");
   const rangeParam = url.searchParams.get("range") || "3m";
+  const selfUser = url.searchParams.get("self") || "";
 
-  if (!usersParam) {
-    return svgResponse(
-      renderErrorSvg("Missing ?users= parameter. Example: ?users=torvalds,mitchellh")
-    );
-  }
-
-  if (!VALID_RANGES.has(rangeParam)) {
-    return svgResponse(
-      renderErrorSvg(`Invalid range "${rangeParam}". Use: 3m, 6m, 1y, or all`)
-    );
-  }
+  if (!usersParam) return { error: "Missing ?users= parameter" };
+  if (!VALID_RANGES.has(rangeParam)) return { error: `Invalid range "${rangeParam}"` };
 
   const usernames = usersParam
     .split(",")
@@ -59,19 +53,22 @@ async function handleSvg(
     .filter(Boolean)
     .slice(0, MAX_USERS);
 
-  if (usernames.length === 0) {
-    return svgResponse(renderErrorSvg("No usernames provided"));
-  }
+  if (usernames.length === 0) return { error: "No usernames provided" };
 
-  const range = rangeParam as TimeRange;
-  const selfUser = url.searchParams.get("self") || "";
+  return { usernames, range: rangeParam as TimeRange, selfUser };
+}
 
-  // Check SVG cache first (keyed by sorted users + range + self)
+/** Generate SVG string for given params (shared by /api/svg and /api/png). */
+async function generateSvg(
+  env: Env,
+  usernames: string[],
+  range: TimeRange,
+  selfUser: string
+): Promise<string> {
+  // Check SVG cache first
   const svgCacheKey = `svg:${[...usernames].sort().join(",")}:${range}:${selfUser}`;
   const cachedSvg = await env.CACHE.get(svgCacheKey);
-  if (cachedSvg) {
-    return svgResponse(cachedSvg);
-  }
+  if (cachedSvg) return cachedSvg;
 
   // Fetch all users' data and avatars in parallel
   const [contribResults, avatarResults] = await Promise.all([
@@ -104,15 +101,82 @@ async function handleSvg(
   }
 
   if (datasets.length === 0) {
-    return svgResponse(renderErrorSvg(errors.join("; ")));
+    return renderErrorSvg(errors.join("; "));
   }
 
   const svg = renderChart(datasets, selfUser || undefined);
 
-  // Cache the rendered SVG for 24 hours
+  // Cache for 24 hours
   await env.CACHE.put(svgCacheKey, svg, { expirationTtl: 86400 });
 
+  return svg;
+}
+
+async function handleSvg(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  const url = new URL(request.url);
+  const params = parseChartParams(url);
+  if ("error" in params) {
+    return svgResponse(renderErrorSvg(params.error));
+  }
+
+  const svg = await generateSvg(env, params.usernames, params.range, params.selfUser);
   return svgResponse(svg);
+}
+
+async function handlePng(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  const url = new URL(request.url);
+  const params = parseChartParams(url);
+  if ("error" in params) {
+    return svgResponse(renderErrorSvg(params.error));
+  }
+
+  const { usernames, range, selfUser } = params;
+
+  // Check PNG cache first
+  const pngCacheKey = `png:${[...usernames].sort().join(",")}:${range}:${selfUser}`;
+  const cachedPng = await env.CACHE.get(pngCacheKey, "arrayBuffer");
+  if (cachedPng) {
+    return new Response(cachedPng, {
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=1800",
+        ...corsHeaders(),
+      },
+    });
+  }
+
+  // Generate SVG
+  const svg = await generateSvg(env, usernames, range, selfUser);
+
+  // Initialize resvg WASM if not done yet
+  if (!wasmInitialized) {
+    await initWasm(resvgWasm);
+    wasmInitialized = true;
+  }
+
+  // Convert SVG to PNG
+  const resvg = new Resvg(svg, {
+    fitTo: { mode: "width", value: 1200 },
+  });
+  const pngData = resvg.render();
+  const pngBuffer = pngData.asPng();
+
+  // Cache PNG for 24 hours
+  await env.CACHE.put(pngCacheKey, pngBuffer, { expirationTtl: 86400 });
+
+  return new Response(pngBuffer, {
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=1800",
+      ...corsHeaders(),
+    },
+  });
 }
 
 async function handleApi(
@@ -159,6 +223,69 @@ async function handleApi(
   return jsonResponse({ datasets });
 }
 
+/** Inject OG/Twitter meta tags into HTML for social sharing. */
+async function handlePageWithOgTags(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  const url = new URL(request.url);
+
+  // Parse user params from either new or legacy format
+  const selfUser = url.searchParams.get("user") || "";
+  const targetsParam = url.searchParams.get("targets") || "";
+  const usersParam = url.searchParams.get("users") || "";
+  const range = url.searchParams.get("range") || "3m";
+
+  let allUsers: string[];
+  let targets: string[];
+
+  if (targetsParam) {
+    targets = targetsParam.split(",").map(u => u.trim()).filter(Boolean);
+    allUsers = [selfUser, ...targets].filter(Boolean);
+  } else if (usersParam) {
+    allUsers = usersParam.split(",").map(u => u.trim()).filter(Boolean);
+    targets = selfUser ? allUsers.filter(u => u !== selfUser) : allUsers;
+  } else {
+    // No chart params — serve static page as-is
+    return env.ASSETS.fetch(request);
+  }
+
+  if (allUsers.length === 0) {
+    return env.ASSETS.fetch(request);
+  }
+
+  // Use first target as the "beat" username for OG title
+  const beatUser = targets.length > 0 ? targets[0] : allUsers[0];
+
+  // Build image URLs
+  const selfParam = selfUser ? `&self=${selfUser}` : "";
+  const pngUrl = `https://codewar.dev/api/png?users=${allUsers.join(",")}&range=${range}${selfParam}`;
+  const pageUrl = `https://codewar.dev/${url.search}`;
+
+  const ogTags = `
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="CAN YOU BEAT @${beatUser}?">
+    <meta property="og:description" content="Compare GitHub contributions over time on codewar.dev">
+    <meta property="og:image" content="${pngUrl}">
+    <meta property="og:url" content="${pageUrl}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CAN YOU BEAT @${beatUser}?">
+    <meta name="twitter:description" content="Compare GitHub contributions over time">
+    <meta name="twitter:image" content="${pngUrl}">`;
+
+  // Fetch the static HTML and inject OG tags
+  const assetResponse = await env.ASSETS.fetch(new Request(new URL("/", request.url), request));
+  let html = await assetResponse.text();
+  html = html.replace("</head>", `${ogTags}\n</head>`);
+
+  return new Response(html, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      ...corsHeaders(),
+    },
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -171,8 +298,17 @@ export default {
       return handleSvg(request, env);
     }
 
+    if (url.pathname === "/api/png") {
+      return handlePng(request, env);
+    }
+
     if (url.pathname === "/api/data") {
       return handleApi(request, env);
+    }
+
+    // Root with chart params — inject OG tags for social sharing
+    if (url.pathname === "/" && (url.searchParams.has("user") || url.searchParams.has("targets") || url.searchParams.has("users"))) {
+      return handlePageWithOgTags(request, env);
     }
 
     // Everything else: serve static assets (website)
