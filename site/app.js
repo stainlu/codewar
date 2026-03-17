@@ -58,6 +58,11 @@ function initFromUrl() {
     });
   }
 
+  // Default targets when visiting with no params
+  if (!selfUser && targets.length === 0 && !params.has("user") && !params.has("targets") && !params.has("users")) {
+    targets = ["bcherny", "karpathy", "torvalds"];
+  }
+
   renderTags();
   if (getAllUsers().length > 0) {
     loadChart();
