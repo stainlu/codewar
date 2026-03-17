@@ -242,6 +242,20 @@ header {
   background: #eee;
 }
 
+.btn-reset {
+  padding: 5px 14px;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #e34234;
+  color: #e34234;
+  margin-left: auto;
+}
+
+.btn-reset:hover {
+  background: #e34234;
+  color: #fff;
+}
+
 .btn-range.active {
   background: #4285F4;
   color: #fff;

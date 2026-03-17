@@ -22,6 +22,7 @@ const copyBtn = document.getElementById("copy-btn");
 const chartSpinner = document.getElementById("chart-spinner");
 const guideSection = document.getElementById("guide");
 const guideLink = document.getElementById("guide-link");
+const resetBtn = document.getElementById("reset-btn");
 
 // Initialize from URL params
 function initFromUrl() {
@@ -254,6 +255,23 @@ copyBtn.addEventListener("click", () => {
       copyBtn.classList.remove("copied");
     }, 2000);
   });
+});
+
+// Reset all
+resetBtn.addEventListener("click", () => {
+  selfUser = "";
+  targets = [];
+  range = "3m";
+  beatUser = "";
+  selfInput.value = "";
+  targetInput.value = "";
+  document.querySelectorAll(".btn-range").forEach(b => {
+    b.classList.toggle("active", b.dataset.range === "3m");
+  });
+  renderTags();
+  showPlaceholder();
+  shareXBtn.classList.add("hidden");
+  updateUrl();
 });
 
 // Share on X
