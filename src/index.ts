@@ -153,10 +153,10 @@ async function handlePng(
 
   const browser = await puppeteer.launch(env.BROWSER);
   const page = await browser.newPage();
-  await page.setViewport({ width: 980, height: 400 });
+  await page.setViewport({ width: 1200, height: 628 });
 
-  // Render SVG in a minimal HTML page with white background
-  const html = `<html><body style="margin:0;padding:0;background:#fff"><img src="${svgUrl}" style="width:980px;height:400px"></body></html>`;
+  // Render SVG centered in OG-standard 1200×628 frame (1.91:1 ratio for X/Twitter)
+  const html = `<html><body style="margin:0;padding:0;background:#fff;display:flex;align-items:center;justify-content:center;width:1200px;height:628px"><img src="${svgUrl}" style="max-width:1160px;max-height:588px;width:auto;height:auto"></body></html>`;
   await page.setContent(html, { waitUntil: "networkidle0" });
 
   // Wait for draw animation to complete
