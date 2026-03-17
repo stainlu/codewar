@@ -1,7 +1,7 @@
 
 <p align="center">
-  <a href="https://codewar.dev/?user=stainlu&targets=torvalds,mitchellh,bcherny&range=3m">
-    <img src="https://codewar.dev/api/svg?users=stainlu,torvalds,mitchellh,bcherny&range=3m&self=stainlu&v=5" alt="CAN YOU BEAT @bcherny?" />
+  <a href="https://codewar.dev/?user=stainlu&targets=torvalds,mitchellh,bcherny,garrytan&range=3m">
+    <img src="https://codewar.dev/api/svg?users=stainlu,torvalds,mitchellh,bcherny,garrytan&range=3m&self=stainlu&v=5" alt="CAN YOU BEAT @bcherny?" />
   </a>
 </p>
 
@@ -35,7 +35,7 @@
 Add one line to your [profile README](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/customizing-your-profile/managing-your-profile-readme):
 
 ```markdown
-[![Code War](https://codewar.dev/api/svg?users=YOUR_USERNAME,torvalds,bcherny&range=3m&self=YOUR_USERNAME)](https://codewar.dev/?user=YOUR_USERNAME&targets=torvalds,bcherny&range=3m)
+[![Code War](https://codewar.dev/api/svg?users=YOUR_USERNAME,torvalds,bcherny,garrytan&range=3m&self=YOUR_USERNAME)](https://codewar.dev/?user=YOUR_USERNAME&targets=torvalds,bcherny,garrytan&range=3m)
 ```
 
 Replace `YOUR_USERNAME` with yours. Or use [codewar.dev](https://codewar.dev) to build your chart visually and copy the embed code.
@@ -52,7 +52,7 @@ Every chart generates a Twitter Card automatically. Click "Share on X" on the si
 
 | Parameter | Description | Values |
 |-----------|-------------|--------|
-| `users` | GitHub usernames (comma-separated, max 5) | `torvalds,bcherny` |
+| `users` | GitHub usernames (comma-separated, max 5) | `torvalds,bcherny,garrytan` |
 | `range` | Time range | `1m`, `3m`, `1y`, `all` |
 | `self` | Your username (excluded from title, thicker line) | `stainlu` |
 
