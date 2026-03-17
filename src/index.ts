@@ -2,14 +2,10 @@ import type { Env, TimeRange, ChartData } from "./types";
 import { fetchUserContributions, fetchAvatar } from "./github";
 import { filterByRange, applyMovingAverage } from "./smoothing";
 import { renderChart, renderErrorSvg } from "./chart";
-import { Resvg, initWasm } from "@resvg/resvg-wasm";
-// @ts-ignore — wrangler handles .wasm imports
-import resvgWasm from "../node_modules/@resvg/resvg-wasm/index_bg.wasm";
+import puppeteer from "@cloudflare/puppeteer";
 
 const VALID_RANGES = new Set(["1m", "3m", "1y", "all"]);
 const MAX_USERS = 5;
-
-let wasmInitialized = false;
 
 function corsHeaders(): HeadersInit {
   return {
@@ -151,21 +147,23 @@ async function handlePng(
     });
   }
 
-  // Generate SVG
-  const svg = await generateSvg(env, usernames, range, selfUser);
+  // Use Cloudflare Browser Rendering to screenshot the SVG
+  const selfParam = selfUser ? `&self=${selfUser}` : "";
+  const svgUrl = `https://codewar.dev/api/svg?users=${usernames.join(",")}&range=${range}${selfParam}`;
 
-  // Initialize resvg WASM if not done yet
-  if (!wasmInitialized) {
-    await initWasm(resvgWasm);
-    wasmInitialized = true;
-  }
+  const browser = await puppeteer.launch(env.BROWSER);
+  const page = await browser.newPage();
+  await page.setViewport({ width: 980, height: 400 });
 
-  // Convert SVG to PNG
-  const resvg = new Resvg(svg, {
-    fitTo: { mode: "width", value: 1200 },
-  });
-  const pngData = resvg.render();
-  const pngBuffer = pngData.asPng();
+  // Render SVG in a minimal HTML page with white background
+  const html = `<html><body style="margin:0;padding:0;background:#fff"><img src="${svgUrl}" style="width:980px;height:400px"></body></html>`;
+  await page.setContent(html, { waitUntil: "networkidle0" });
+
+  // Wait for draw animation to complete
+  await new Promise(r => setTimeout(r, 1500));
+
+  const pngBuffer = await page.screenshot({ type: "png" }) as Buffer;
+  await browser.close();
 
   // Cache PNG for 24 hours
   await env.CACHE.put(pngCacheKey, pngBuffer, { expirationTtl: 86400 });

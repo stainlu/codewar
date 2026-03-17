@@ -2,6 +2,7 @@ export interface Env {
   CACHE: KVNamespace;
   GITHUB_TOKEN: string;
   ASSETS: Fetcher;
+  BROWSER: any; // Cloudflare Browser Rendering binding
 }
 
 export interface DailyContribution {
