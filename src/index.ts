@@ -49,13 +49,13 @@ function parseChartParams(url: URL) {
 
   const usernames = usersParam
     .split(",")
-    .map((u) => u.trim())
+    .map((u) => u.trim().toLowerCase())
     .filter(Boolean)
     .slice(0, MAX_USERS);
 
   if (usernames.length === 0) return { error: "No usernames provided" };
 
-  return { usernames, range: rangeParam as TimeRange, selfUser, theme };
+  return { usernames, range: rangeParam as TimeRange, selfUser: selfUser.toLowerCase(), theme };
 }
 
 /** Generate SVG string for given params (shared by /api/svg and /api/png). */
@@ -204,7 +204,7 @@ async function handleApi(
 
   const usernames = usersParam
     .split(",")
-    .map((u) => u.trim())
+    .map((u) => u.trim().toLowerCase())
     .filter(Boolean)
     .slice(0, MAX_USERS);
 
@@ -238,7 +238,7 @@ async function handlePageWithOgTags(
   const url = new URL(request.url);
 
   // Parse user params from either new or legacy format
-  const selfUser = url.searchParams.get("user") || "";
+  const selfUser = (url.searchParams.get("user") || "").toLowerCase();
   const targetsParam = url.searchParams.get("targets") || "";
   const usersParam = url.searchParams.get("users") || "";
   const range = url.searchParams.get("range") || "3m";
@@ -247,10 +247,10 @@ async function handlePageWithOgTags(
   let targets: string[];
 
   if (targetsParam) {
-    targets = targetsParam.split(",").map(u => u.trim()).filter(Boolean);
+    targets = targetsParam.split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
     allUsers = [selfUser, ...targets].filter(Boolean);
   } else if (usersParam) {
-    allUsers = usersParam.split(",").map(u => u.trim()).filter(Boolean);
+    allUsers = usersParam.split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
     targets = selfUser ? allUsers.filter(u => u !== selfUser) : allUsers;
   } else {
     // No chart params — serve static page as-is
