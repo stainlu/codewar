@@ -153,9 +153,10 @@ async function handlePng(
   }
 
   // Use Cloudflare Browser Rendering to screenshot the SVG
+  const origin = new URL(request.url).origin;
   const selfParam = selfUser ? `&self=${selfUser}` : "";
   const themeParam = theme === "dark" ? `&theme=dark` : "";
-  const svgUrl = `https://codewar.dev/api/svg?users=${usernames.join(",")}&range=${range}${selfParam}${themeParam}`;
+  const svgUrl = `${origin}/api/svg?users=${usernames.join(",")}&range=${range}${selfParam}${themeParam}`;
 
   const browser = await puppeteer.launch(env.BROWSER);
   const page = await browser.newPage();
@@ -261,10 +262,11 @@ async function handlePageWithOgTags(
     return env.ASSETS.fetch(request);
   }
 
-  // Build image URLs
+  // Build image URLs using current origin (works for self-hosted deployments)
+  const origin = new URL(request.url).origin;
   const selfParam = selfUser ? `&self=${selfUser}` : "";
-  const pngUrl = `https://codewar.dev/api/png?users=${allUsers.join(",")}&range=${range}${selfParam}`;
-  const pageUrl = `https://codewar.dev/${url.search}`;
+  const pngUrl = `${origin}/api/png?users=${allUsers.join(",")}&range=${range}${selfParam}`;
+  const pageUrl = `${origin}/${url.search}`;
 
   const ogTags = `
     <meta property="og:type" content="website">
