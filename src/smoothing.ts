@@ -30,7 +30,7 @@ export function filterByRange(
 }
 
 /**
- * Apply a 7-day moving average to smooth the contribution data.
+ * Apply a centered moving average to smooth the contribution data.
  * Returns one smoothed point per day.
  */
 export function applyMovingAverage(

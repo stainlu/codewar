@@ -158,32 +158,35 @@ async function handlePng(
   const svgUrl = `https://codewar.dev/api/svg?users=${usernames.join(",")}&range=${range}${selfParam}${themeParam}`;
 
   const browser = await puppeteer.launch(env.BROWSER);
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1200, height: 628 });
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1200, height: 628 });
 
-  // Render SVG centered in OG-standard 1200×628 frame (1.91:1 ratio for X/Twitter)
-  const html = `<html><body style="margin:0;padding:0;background:#fff;display:flex;align-items:center;justify-content:center;width:1200px;height:628px"><img src="${svgUrl}" style="max-width:1160px;max-height:588px;width:auto;height:auto"></body></html>`;
-  await page.setContent(html, { waitUntil: "networkidle0" });
+    // Render SVG centered in OG-standard 1200×628 frame (1.91:1 ratio for X/Twitter)
+    const html = `<html><body style="margin:0;padding:0;background:#fff;display:flex;align-items:center;justify-content:center;width:1200px;height:628px"><img src="${svgUrl}" style="max-width:1160px;max-height:588px;width:auto;height:auto"></body></html>`;
+    await page.setContent(html, { waitUntil: "networkidle0" });
 
-  // Wait for draw animation to complete
-  await new Promise(r => setTimeout(r, 1500));
+    // Wait for draw animation to complete
+    await new Promise(r => setTimeout(r, 1500));
 
-  const pngBuffer = await page.screenshot({
-    type: "png",
-    clip: { x: 0, y: 0, width: 1200, height: 628 },
-  }) as Buffer;
-  await browser.close();
+    const pngBuffer = await page.screenshot({
+      type: "png",
+      clip: { x: 0, y: 0, width: 1200, height: 628 },
+    }) as Buffer;
 
-  // Cache PNG for 24 hours
-  await env.CACHE.put(pngCacheKey, pngBuffer, { expirationTtl: 86400 });
+    // Cache PNG for 24 hours
+    await env.CACHE.put(pngCacheKey, pngBuffer, { expirationTtl: 86400 });
 
-  return new Response(pngBuffer, {
-    headers: {
-      "Content-Type": "image/png",
-      "Cache-Control": "public, max-age=1800",
-      ...corsHeaders(),
-    },
-  });
+    return new Response(pngBuffer, {
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=1800",
+        ...corsHeaders(),
+      },
+    });
+  } finally {
+    await browser.close();
+  }
 }
 
 async function handleApi(
@@ -219,7 +222,7 @@ async function handleApi(
   for (const result of results) {
     if (result.status === "fulfilled") {
       const filtered = filterByRange(result.value.daily, range);
-            const smoothed = applyMovingAverage(filtered, 3);
+      const smoothed = applyMovingAverage(filtered, 3);
       datasets.push({
         username: result.value.username,
         points: smoothed,
