@@ -162,7 +162,8 @@ async function handlePng(
   await page.setViewport({ width: 1200, height: 628 });
 
   // Render SVG centered in OG-standard 1200×628 frame (1.91:1 ratio for X/Twitter)
-  const html = `<html><body style="margin:0;padding:0;background:#fff;display:flex;align-items:center;justify-content:center;width:1200px;height:628px"><img src="${svgUrl}" style="max-width:1160px;max-height:588px;width:auto;height:auto"></body></html>`;
+  const bgColor = theme === "dark" ? "#0d1117" : "#fff";
+  const html = `<html><body style="margin:0;padding:0;background:${bgColor};display:flex;align-items:center;justify-content:center;width:1200px;height:628px"><img src="${svgUrl}" style="max-width:1160px;max-height:588px;width:auto;height:auto"></body></html>`;
   await page.setContent(html, { waitUntil: "networkidle0" });
 
   // Wait for draw animation to complete
