@@ -312,6 +312,23 @@ header {
   z-index: 10;
 }
 
+.chart-warning {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #fff8e1;
+  border: 1px solid #ffe0a0;
+  border-radius: 8px;
+  color: #7a5a00;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.chart-warning.error {
+  background: #fdecec;
+  border-color: #f5bcbc;
+  color: #8b1f1f;
+}
+
 .spinner {
   width: 28px;
   height: 28px;

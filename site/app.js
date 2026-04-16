@@ -7,6 +7,11 @@ let range = "3m";
 let theme = "light";
 let beatUser = ""; // top performer among targets, computed after chart loads
 
+// Monotonic counter used to ignore stale image-preload callbacks when the
+// user clicks Add/Remove rapidly. Only the most recent loadChart's onload
+// is allowed to commit to the visible DOM.
+let currentLoadId = 0;
+
 // DOM elements
 const selfInput = document.getElementById("self-input");
 const targetInput = document.getElementById("target-input");
@@ -16,6 +21,7 @@ const targetTags = document.getElementById("target-tags");
 const chartImg = document.getElementById("chart-img");
 const chartPlaceholder = document.getElementById("chart-placeholder");
 const chartLoading = document.getElementById("chart-loading");
+const chartWarning = document.getElementById("chart-warning");
 const embedSection = document.getElementById("embed-section");
 const shareXBtn = document.getElementById("share-x-btn");
 const embedCode = document.getElementById("embed-code");
@@ -160,6 +166,19 @@ function showPlaceholder() {
   chartImg.classList.add("hidden");
   chartLoading.classList.add("hidden");
   embedSection.classList.add("hidden");
+  clearWarning();
+}
+
+function showWarning(msg, isError = false) {
+  chartWarning.textContent = msg;
+  chartWarning.classList.toggle("error", isError);
+  chartWarning.classList.remove("hidden");
+}
+
+function clearWarning() {
+  chartWarning.classList.add("hidden");
+  chartWarning.classList.remove("error");
+  chartWarning.textContent = "";
 }
 
 function loadChart() {
@@ -170,6 +189,7 @@ function loadChart() {
   }
 
   const hasExistingChart = !chartImg.classList.contains("hidden");
+  const loadId = ++currentLoadId;
 
   chartPlaceholder.classList.add("hidden");
   if (!hasExistingChart) {
@@ -184,6 +204,7 @@ function loadChart() {
 
   const img = new Image();
   img.onload = () => {
+    if (loadId !== currentLoadId) return; // superseded by a newer loadChart
     chartImg.src = svgUrl;
     chartImg.classList.remove("hidden");
     chartLoading.classList.add("hidden");
@@ -193,31 +214,49 @@ function loadChart() {
     embedCode.textContent = markdown;
     embedSection.classList.remove("hidden");
 
-    // Fetch data to determine top performer for share button
-    const targetUsers = targets.length > 0 ? targets : allUsers;
-    fetch(`${BASE_URL}/api/data?users=${targetUsers.join(",")}&range=${range}`)
+    // Fetch data to determine top performer and catch per-user failures
+    // that the SVG endpoint silently dropped. Shares the same loadId so a
+    // stale response from an earlier click can't overwrite the warning.
+    const dataUsers = allUsers;
+    fetch(`${BASE_URL}/api/data?users=${dataUsers.join(",")}&range=${range}`)
       .then(r => r.json())
       .then(data => {
+        if (loadId !== currentLoadId) return;
+
+        if (Array.isArray(data.failedUsers) && data.failedUsers.length > 0) {
+          showWarning(
+            `Couldn't load data for: ${data.failedUsers.join(", ")}. These users are missing from the chart — double-check the spelling or try again.`
+          );
+        } else {
+          clearWarning();
+        }
+
+        const targetUsers = targets.length > 0 ? targets : allUsers;
         let topAvg = 0;
         beatUser = targetUsers[0] || "";
         for (const ds of data.datasets) {
           if (ds.points.length === 0) continue;
+          if (!targetUsers.includes(ds.username)) continue;
           const avg = ds.points.reduce((s, p) => s + p.value, 0) / ds.points.length;
           if (avg > topAvg) { topAvg = avg; beatUser = ds.username; }
         }
         shareXBtn.classList.remove("hidden");
       })
       .catch(() => {
-        beatUser = targetUsers[0] || "";
+        if (loadId !== currentLoadId) return;
+        beatUser = (targets[0] || allUsers[0]) || "";
         shareXBtn.classList.remove("hidden");
       });
   };
   img.onerror = () => {
+    if (loadId !== currentLoadId) return; // superseded by a newer loadChart
     chartLoading.classList.add("hidden");
     chartSpinner.classList.add("hidden");
     if (!hasExistingChart) {
       chartPlaceholder.classList.remove("hidden");
       chartPlaceholder.querySelector("p").textContent = "Failed to load chart. Please try again.";
+    } else {
+      showWarning("Failed to refresh chart. Check your connection and try again.", true);
     }
   };
   img.src = svgUrl;

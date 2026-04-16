@@ -8,21 +8,32 @@ const VALID_RANGES = new Set(["1m", "3m", "1y", "all"]);
 const VALID_THEMES = new Set(["light", "dark"]);
 const MAX_USERS = 5;
 
+const FAILED_USERS_HEADER = "X-Codewar-Failed-Users";
+
 function corsHeaders(): HeadersInit {
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Expose-Headers": FAILED_USERS_HEADER,
   };
 }
 
-function svgResponse(svg: string, cacheSeconds = 1800): Response {
-  return new Response(svg, {
-    headers: {
-      "Content-Type": "image/svg+xml",
-      "Cache-Control": `public, max-age=${cacheSeconds}`,
-      ...corsHeaders(),
-    },
-  });
+function svgResponse(
+  svg: string,
+  opts: { cacheSeconds?: number; failedUsers?: string[] } = {}
+): Response {
+  const { cacheSeconds = 1800, failedUsers = [] } = opts;
+  const headers: Record<string, string> = {
+    "Content-Type": "image/svg+xml",
+    // Partial results get a tiny TTL so a transient failure doesn't pin a
+    // bad chart to the edge cache for 30 minutes.
+    "Cache-Control": `public, max-age=${failedUsers.length > 0 ? 60 : cacheSeconds}`,
+    ...(corsHeaders() as Record<string, string>),
+  };
+  if (failedUsers.length > 0) {
+    headers[FAILED_USERS_HEADER] = failedUsers.join(",");
+  }
+  return new Response(svg, { headers });
 }
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -58,6 +69,12 @@ function parseChartParams(url: URL) {
   return { usernames, range: rangeParam as TimeRange, selfUser, theme };
 }
 
+/** Result of generateSvg — carries failed usernames so callers can surface them. */
+interface GenerateResult {
+  svg: string;
+  failedUsers: string[];
+}
+
 /** Generate SVG string for given params (shared by /api/svg and /api/png). */
 async function generateSvg(
   env: Env,
@@ -65,13 +82,14 @@ async function generateSvg(
   range: TimeRange,
   selfUser: string,
   theme: "light" | "dark" = "light"
-): Promise<string> {
-  // Check SVG cache first (theme included in key)
+): Promise<GenerateResult> {
+  // Cache key captures the request; we only read from it when the cached result
+  // was fully successful (no failedUsers). Partial results are never cached, so
+  // a transient error (e.g. expired token) can't get pinned to the cache key.
   const svgCacheKey = `svg:${[...usernames].sort().join(",")}:${range}:${selfUser}:${theme}`;
   const cachedSvg = await env.CACHE.get(svgCacheKey);
-  if (cachedSvg) return cachedSvg;
+  if (cachedSvg) return { svg: cachedSvg, failedUsers: [] };
 
-  // Fetch all users' data and avatars in parallel
   const [contribResults, avatarResults] = await Promise.all([
     Promise.allSettled(
       usernames.map((username) => fetchUserContributions(env, username, range))
@@ -82,6 +100,7 @@ async function generateSvg(
   ]);
 
   const datasets: ChartData[] = [];
+  const failedUsers: string[] = [];
   const errors: string[] = [];
 
   for (let i = 0; i < contribResults.length; i++) {
@@ -97,20 +116,22 @@ async function generateSvg(
         avatarBase64: avatar,
       });
     } else {
+      failedUsers.push(usernames[i]);
       errors.push(`${usernames[i]}: ${result.reason?.message || "unknown error"}`);
     }
   }
 
   if (datasets.length === 0) {
-    return renderErrorSvg(errors.join("; "), theme);
+    return { svg: renderErrorSvg(errors.join("; "), theme), failedUsers };
   }
 
   const svg = renderChart(datasets, selfUser || undefined, theme);
 
-  // Cache for 24 hours
-  await env.CACHE.put(svgCacheKey, svg, { expirationTtl: 86400 });
+  if (failedUsers.length === 0) {
+    await env.CACHE.put(svgCacheKey, svg, { expirationTtl: 86400 });
+  }
 
-  return svg;
+  return { svg, failedUsers };
 }
 
 async function handleSvg(
@@ -123,8 +144,14 @@ async function handleSvg(
     return svgResponse(renderErrorSvg(params.error as string));
   }
 
-  const svg = await generateSvg(env, params.usernames, params.range, params.selfUser, params.theme);
-  return svgResponse(svg);
+  const { svg, failedUsers } = await generateSvg(
+    env,
+    params.usernames,
+    params.range,
+    params.selfUser,
+    params.theme
+  );
+  return svgResponse(svg, { failedUsers });
 }
 
 async function handlePng(
@@ -215,19 +242,23 @@ async function handleApi(
   );
 
   const datasets: ChartData[] = [];
+  const failedUsers: string[] = [];
 
-  for (const result of results) {
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
     if (result.status === "fulfilled") {
       const filtered = filterByRange(result.value.daily, range);
-            const smoothed = applyMovingAverage(filtered, 3);
+      const smoothed = applyMovingAverage(filtered, 3);
       datasets.push({
         username: result.value.username,
         points: smoothed,
       });
+    } else {
+      failedUsers.push(usernames[i]);
     }
   }
 
-  return jsonResponse({ datasets });
+  return jsonResponse({ datasets, failedUsers });
 }
 
 /** Inject OG/Twitter meta tags into HTML for social sharing. */
